@@ -1,19 +1,21 @@
-import express from "express";
-import cors from "cors";
+import express from 'express';
+import cors from 'cors';
 const app = express();
+
+import ticketsRoutes from './routes/tickets.route.js';
 
 app.use(express.json());
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN ?? "http://localhost:5173",
+    origin: process.env.CORS_ORIGIN ?? 'http://localhost:5173',
     credentials: true,
   }),
 );
 
-const API = "/api";
+const API = '/api';
 
 app.get(`${API}/health`, (req, res) => {
-  res.status(200).json({ status: "ok" });
+  res.status(200).json({ status: 'ok' });
 });
 
 // app.use("/auth");
@@ -22,7 +24,7 @@ app.get(`${API}/health`, (req, res) => {
 
 // app.use("/reserves");
 
-// app.use("/tickets");
+app.use('/tickets', ticketsRoutes);
 
 // app.use("/departments");
 
