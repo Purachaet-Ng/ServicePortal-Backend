@@ -8,9 +8,9 @@ datasource db {
 }
 
 enum Role {
-  ADMIN
-  AGENT
-  EMPLOYEE
+  ADMIN_SYSTEM
+  ADMIN_DEPT
+  STAFF
 }
 
 enum TicketStatus {
@@ -29,6 +29,15 @@ enum Priority {
   URGENT
 }
 
+enum EventStatus {
+  PENDING
+  APPROVE
+  IN_PROGRESS
+  LIVE
+  CLOSED
+  CANCEL
+}
+
 // ---------------- Shared tables ----------------
 
 model Department {
@@ -45,7 +54,7 @@ model User {
   name         String
   email        String      @unique
   passwordHash String      @map("password_hash")
-  role         Role        @default(EMPLOYEE)
+  role         Role        @default(STAFF)
   departmentId Int?        @map("department_id")
   department   Department? @relation(fields: [departmentId], references: [id])
 
@@ -121,7 +130,7 @@ model RoomBooking {
   user      User     @relation(fields: [userId], references: [id])
   startTime DateTime @map("start_time")
   endTime   DateTime @map("end_time")
-  status    String   @default("confirmed")
+  status    Boolean  @default(true)
 
   @@map("room_bookings")
 }
@@ -129,14 +138,14 @@ model RoomBooking {
 // ---------------- Events module ----------------
 
 model Event {
-  id          Int      @id @default(autoincrement())
+  id          Int         @id @default(autoincrement())
   title       String
   description String?
-  startTime   DateTime @map("start_time")
-  endTime     DateTime @map("end_time")
-  organizerId Int      @map("organizer_id")
-  organizer   User     @relation(fields: [organizerId], references: [id])
-  status      String   @default("planned")
+  startTime   DateTime    @map("start_time")
+  endTime     DateTime    @map("end_time")
+  organizerId Int         @map("organizer_id")
+  organizer   User        @relation(fields: [organizerId], references: [id])
+  status      EventStatus @default(PENDING)
 
   attendees EventAttendee[]
 
