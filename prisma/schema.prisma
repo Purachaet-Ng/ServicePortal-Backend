@@ -51,7 +51,9 @@ model Department {
 
 model User {
   id           Int         @id @default(autoincrement())
-  name         String
+  firstname         String
+  lastname          String
+  phone        String?
   email        String      @unique
   passwordHash String      @map("password_hash")
   role         Role        @default(STAFF)
