@@ -8,9 +8,9 @@ datasource db {
 }
 
 enum Role {
-  ADMIN
-  AGENT
-  EMPLOYEE
+  ADMIN_SYSTEM
+  ADMIN_DEPT
+  STAFF
 }
 
 enum TicketStatus {
@@ -45,7 +45,7 @@ model User {
   name         String
   email        String      @unique
   passwordHash String      @map("password_hash")
-  role         Role        @default(EMPLOYEE)
+  role         Role        @default(STAFF)
   departmentId Int?        @map("department_id")
   department   Department? @relation(fields: [departmentId], references: [id])
 
