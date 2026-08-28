@@ -22,11 +22,15 @@ app.get(`${API}/health`, (req, res) => {
 
 // app.use("/reserves");
 
+// app.use("/tickets");
+
 // app.use("/departments");
 
 // app.use("/events");
 
-// app.use("/inventories");
+// app.use("/inventories"); optional
+
+// app.use(validater); all route
 
 // app.use(pathNotFound);
 // app.use(errorHandler);
