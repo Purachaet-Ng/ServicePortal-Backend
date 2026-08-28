@@ -1,5 +1,23 @@
-node_modules
-# Keep environment variables out of version control
-.env
+# Dependencies
+node_modules/
 
-/generated/prisma
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Generated Prisma Client
+generated/prisma/
+
+# Build, coverage, and log files
+dist/
+coverage/
+*.log
+
+# Operating system files
+.DS_Store
+Thumbs.db
+
+05-คู่มือลงมือทั้งระบบ-ทีละก้อน.md
+
+01-คู่มือ-Auth-เริ่มจาก-app-use-auth.md

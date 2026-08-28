@@ -1,49 +1,50 @@
-# 01 — คู่มือทำ Auth เริ่มจาก `app.use("/auth")`
+# 01 — Auth แบบแยก Layer สำหรับมือใหม่
 
-คู่มือนี้ทำเฉพาะ `/auth` เท่านั้น ไม่รวม `/users` และไม่ใช้ Zod หรือ Validation Middleware
+## Code style ที่อิงจากโปรเจกต์ Fakebook
 
-เป้าหมาย:
+คู่มือนี้อิงเฉพาะวิธีจัดและเขียนโค้ดจาก `fakebookback` ไม่ได้เชื่อมต่อหรือคัดลอกระบบ Facebook:
 
-```js
-app.use("/auth", authRouter);
+- ใช้ single quote และไม่บังคับ semicolon
+- Route อ่านง่ายและเรียก Controller ตรง ๆ
+- Controller เป็นคนเรียง Business Flow, ใช้ bcrypt/JWT และกำหนด HTTP error
+- Service มีเฉพาะฟังก์ชัน Prisma สำหรับอ่าน/เขียน Database
+- ใช้ชื่อฟังก์ชันตรงความหมาย เช่น `getUserByEmail` และ `createUser`
+- ใส่ comment ภาษาไทยเฉพาะจุดสำคัญเหมือนตัวอย่าง Fakebook
+- Controller ตอบ HTTP error ด้วย `res.status()` โดยไม่ส่ง HTTP status เข้า Service
+
+สิ่งที่ต่างจาก Fakebook และต้องยึดโปรเจกต์นี้:
+
+- Database เป็น PostgreSQL ผ่าน `@prisma/adapter-pg`
+- Role คือ `STAFF`, `ADMIN_DEPT`, `ADMIN_SYSTEM`
+- JWT ใช้ Secret แยกสาม Role
+- JWT payload ใช้ `id` เป็น User ID แบบเดียวกับตัวอย่าง
+
+คำว่า “สไตล์ Facebook” ในคู่มือนี้หมายถึงโครงสร้างที่แบ่งหน้าที่ชัดเจน ไม่เกี่ยวข้องกับ Facebook API หรือ Facebook Login
+
+```text
+app.js
+→ Route: กำหนด URL
+→ Controller: Business Logic, bcrypt, JWT และ HTTP response
+→ Service: `users.service.js` ติดต่อ Prisma/PostgreSQL เท่านั้น
+→ lib/prisma.js: Prisma Client กลาง
 ```
 
-เส้นทางที่จะได้:
+ทำเฉพาะ:
 
 ```text
 POST /auth/register
 POST /auth/login
 ```
 
-โครงสร้างการทำงาน:
-
-```text
-app.js → auth.route.js → auth.controller.js → auth.service.js
-                                             → Prisma/PostgreSQL
-                                             → bcrypt
-                                             → JWT
-```
+ยังไม่ใช้ Zod หรือ Validation Middleware
 
 ---
 
-# STEP 1 — เริ่มที่ `src/app.js`
+# STEP 1 — เริ่มจาก `app.use("/auth")`
 
-ใส่ import ด้านบน:
-
-```js
-import authRouter from "./routes/auth.route.js";
-```
-
-วางบรรทัดนี้หลัง `express.json()` และ CORS:
+ไฟล์ `src/app.js`:
 
 ```js
-app.use("/auth", authRouter);
-```
-
-ไฟล์เต็ม:
-
-```js
-import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import authRouter from "./routes/auth.route.js";
@@ -68,7 +69,7 @@ app.use("/auth", authRouter);
 export default app;
 ```
 
-ตอนนี้ยังไม่รัน Server เพราะ `auth.route.js` ยังไม่ได้สร้าง ให้ทำ STEP 2 ต่อทันที
+`express.json()` ต้องอยู่ก่อน Auth Router เพื่อให้ Controller อ่าน JSON Body ได้
 
 ---
 
@@ -87,60 +88,23 @@ router.post("/register", register);
 export default router;
 ```
 
-Express นำ path มาต่อกัน:
+URL สุดท้าย:
 
 ```text
-/auth + /register = /auth/register
+/auth + /register = POST /auth/register
 ```
-
-ยังไม่รัน Server เพราะ Controller ยังไม่ได้สร้าง
 
 ---
 
-# STEP 3 — ทำ Register Controller
+# STEP 3 — ทำ Service สำหรับ Register
 
-สร้าง `src/controllers/auth.controller.js`:
+Service มีหน้าที่ติดต่อข้อมูลเท่านั้น จึงไม่มี bcrypt, JWT, HTTP status หรือ `createServiceError()`
 
-```js
-import { registerUser } from "../services/auth.service.js";
-
-export async function register(req, res, next) {
-  try {
-    const user = await registerUser(req.body);
-
-    return res.status(201).json({
-      message: "สมัครสมาชิกสำเร็จ",
-      user: user,
-    });
-  } catch (error) {
-    if (error.statusCode) {
-      return res.status(error.statusCode).json({
-        message: error.message,
-      });
-    }
-
-    next(error);
-  }
-}
-```
-
-Controller ทำเพียงสามอย่าง:
-
-1. รับ `req.body`
-2. ส่งให้ Service
-3. ตอบ HTTP `201`
-
-ยังไม่รัน Server เพราะ Service ยังไม่ได้สร้าง
-
----
-
-# STEP 4 — ทำ Register Service
-
-สร้าง `src/services/auth.service.js`:
+สร้าง `src/services/users.service.js`:
 
 ```js
-import bcrypt from "bcrypt";
-import { prisma } from "../lib/prisma.js";
+// รวมคำสั่งที่ติดต่อกับตาราง User ไว้ที่เดียว
+import { prisma } from '../lib/prisma.js'
 
 const publicUserSelect = {
   id: true,
@@ -148,55 +112,93 @@ const publicUserSelect = {
   email: true,
   role: true,
   departmentId: true,
-  createdAt: true,
-};
+  createdAt: true
+}
 
+export const findUserByEmail = async (email) => {
+  return await prisma.user.findUnique({
+    where: { email: email }
+  })
+}
+
+export const createUser = async (userData) => {
+  return await prisma.user.create({
+    data: userData,
+    select: publicUserSelect
+  })
+}
+```
+
+เหตุผลที่เอา `createServiceError()` ออก:
+
+```js
 function createServiceError(statusCode, message) {
   const error = new Error(message);
   error.statusCode = statusCode;
   return error;
 }
+```
 
-export async function registerUser(data) {
-  const existingUser = await prisma.user.findUnique({
-    where: {
-      email: data.email,
-    },
-  });
+`statusCode` เป็นเรื่อง HTTP แต่ Service ของโครงสร้างนี้รับผิดชอบข้อมูลเท่านั้น การตัดสินใจว่าจะตอบ `409` หรือ `401` จึงอยู่ใน Controller
 
-  if (existingUser) {
-    throw createServiceError(409, "Email นี้ถูกใช้งานแล้ว");
-  }
+---
 
-  const passwordHash = await bcrypt.hash(data.password, 12);
+# STEP 4 — ทำ Register Controller
 
-  const user = await prisma.user.create({
-    data: {
-      name: data.name,
-      email: data.email,
+Controller รับผิดชอบ Business Logic, bcrypt และ HTTP response
+
+สร้าง `src/controllers/auth.controller.js`:
+
+```js
+import bcrypt from "bcrypt";
+import {
+  createUser,
+  findUserByEmail,
+} from "../services/users.service.js";
+
+export async function register(req, res, next) {
+  try {
+    const existingUser = await findUserByEmail(req.body.email);
+
+    if (existingUser) {
+      return res.status(409).json({
+        message: "Email is already in use",
+      });
+    }
+
+    const passwordHash = await bcrypt.hash(req.body.password, 12);
+
+    const user = await createUser({
+      name: req.body.name,
+      email: req.body.email,
       passwordHash: passwordHash,
-      departmentId: data.departmentId,
+      departmentId: req.body.departmentId,
       role: "STAFF",
-    },
-    select: publicUserSelect,
-  });
+    });
 
-  return user;
+    return res.status(201).json({
+      message: "Registration successful",
+      user: user,
+    });
+  } catch (error) {
+    next(error);
+  }
 }
 ```
 
-Service ทำงานตามลำดับ:
+Register flow:
 
 ```text
-หา Email → Hash Password → สร้าง STAFF → คืนข้อมูลที่ไม่มี Password
+Controller → Service หา Email
+→ Controller hash Password
+→ Service สร้าง User ใน PostgreSQL
+→ Controller ตอบ 201
 ```
-
-`src/lib/prisma.js` เป็น Prisma กลางของโปรเจกต์ งาน Auth เพียง import มาใช้ ไม่สร้าง Prisma Client ซ้ำ
 
 ### CHECKPOINT 1 — Register Syntax
 
 ```powershell
-node --check src/services/auth.service.js
+node --check src/services/users.service.js
 node --check src/controllers/auth.controller.js
 node --check src/routes/auth.route.js
 node --check src/app.js
@@ -204,25 +206,21 @@ node --check src/app.js
 
 ทุกคำสั่งต้องไม่มี SyntaxError
 
-### CHECKPOINT 2 — เปิด Server
+### CHECKPOINT 2 — Postman Register
+
+เปิด Server:
 
 ```powershell
 npm run dev
 ```
 
-เปิด:
+ตรวจ Health:
 
 ```text
 GET http://localhost:8000/api/health
 ```
 
-ต้องได้:
-
-```json
-{ "status": "ok" }
-```
-
-### CHECKPOINT 3 — Postman Register
+Register:
 
 ```text
 POST http://localhost:8000/auth/register
@@ -239,51 +237,144 @@ Body → raw → JSON:
 }
 ```
 
-ต้องได้ `201 Created`, role เป็น `STAFF` และ Response ไม่มี `passwordHash`
-
-ส่ง Email เดิมซ้ำต้องได้ `409 Conflict`
-
-**หยุดตรงนี้:** ถ้า Register ยังไม่ผ่าน ห้ามทำ Login
+ต้องได้ `201`, Role `STAFF` และไม่มี `passwordHash` ใน response ก่อนเริ่ม Login
 
 ---
 
-# STEP 5 — ทำ JWT หลัง Register ผ่าน
+# STEP 5 — JWT แยก Secret ตาม 3 Role
 
-ใส่เต็มไฟล์ `src/utils/jwt.js`:
-
-```js
-import jwt from "jsonwebtoken";
-
-function getJwtSecret() {
-  if (!process.env.JWT_SECRET_KEY) {
-    throw new Error("JWT_SECRET_KEY is not configured");
-  }
-
-  return process.env.JWT_SECRET_KEY;
-}
-
-export function signAccessToken(user) {
-  const payload = {
-    sub: String(user.id),
-    role: user.role,
-  };
-
-  const options = {
-    expiresIn: process.env.JWT_EXPIRES_IN || "1d",
-  };
-
-  return jwt.sign(payload, getJwtSecret(), options);
-}
-```
-
-เพิ่มใน `.env`:
+Environment ใช้สาม Keys:
 
 ```env
-JWT_SECRET_KEY="ข้อความสุ่มยาวอย่างน้อย-32-ตัวอักษร"
+JWT_SECRET_KEY="secret-for-staff"
+JWT_SECRET_KEY_ADMIN_DEPT="secret-for-department-admin"
+JWT_SECRET_KEY_ADMIN_SYSTEM="secret-for-system-admin"
 JWT_EXPIRES_IN="1d"
 ```
 
-### CHECKPOINT 4 — JWT Syntax
+ไฟล์ `src/utils/jwt.js`:
+
+```js
+import jwt from 'jsonwebtoken'
+import 'dotenv/config'
+
+// STAFF
+export const createStaffToken = async (STAFF) => {
+  const payload = {
+    id: STAFF.id,
+    role: STAFF.role
+  }
+
+  const token = jwt.sign(payload, process.env.JWT_SECRET_KEY, {
+    algorithm: 'HS256',
+    expiresIn: process.env.JWT_EXPIRES_IN || '1d'
+  })
+
+  return token
+}
+
+export const verifyStaffToken = async (token) => {
+  return jwt.verify(token, process.env.JWT_SECRET_KEY, {
+    algorithms: ['HS256']
+  })
+}
+
+// ADMIN_DEPT ใช้รูปแบบเดียวกัน แต่ใช้ JWT_SECRET_KEY_ADMIN_DEPT
+export const createAdminDeptToken = async (ADMIN_DEPT) => {
+  const payload = { id: ADMIN_DEPT.id, role: ADMIN_DEPT.role }
+  return jwt.sign(payload, process.env.JWT_SECRET_KEY_ADMIN_DEPT, {
+    algorithm: 'HS256',
+    expiresIn: process.env.JWT_EXPIRES_IN || '1d'
+  })
+}
+
+export const verifyAdminDeptToken = async (token) => {
+  return jwt.verify(token, process.env.JWT_SECRET_KEY_ADMIN_DEPT, {
+    algorithms: ['HS256']
+  })
+}
+
+// ADMIN_SYSTEM ใช้ JWT_SECRET_KEY_ADMIN_SYSTEM
+export const createAdminSystemToken = async (ADMIN_SYSTEM) => {
+  const payload = { id: ADMIN_SYSTEM.id, role: ADMIN_SYSTEM.role }
+  return jwt.sign(payload, process.env.JWT_SECRET_KEY_ADMIN_SYSTEM, {
+    algorithm: 'HS256',
+    expiresIn: process.env.JWT_EXPIRES_IN || '1d'
+  })
+}
+
+export const verifyAdminSystemToken = async (token) => {
+  return jwt.verify(token, process.env.JWT_SECRET_KEY_ADMIN_SYSTEM, {
+    algorithms: ['HS256']
+  })
+}
+```
+
+## ทำไม payload ใช้ `id` และ `role`
+
+ใช้ชื่อตรงไปตรงมาเหมือนตัวอย่าง Doctor/User:
+
+```text
+id   = ID ของเจ้าของ Token
+role = ระดับสิทธิ์ของเจ้าของ Token
+```
+
+สมมติข้อมูลจาก Database คือ:
+
+```js
+{
+  id: 15,
+  role: "STAFF"
+}
+```
+
+เมื่อสร้าง payload:
+
+```js
+const payload = {
+  id: user.id,
+  role: user.role
+}
+```
+
+ระบบจะได้:
+
+```js
+{
+  id: 15,
+  role: "STAFF"
+}
+```
+
+### ลำดับตอน Login
+
+```text
+ผู้ใช้ Login สำเร็จ
+→ Backend อ่าน id และ role ของ User
+→ ใส่ลง JWT payload
+→ เซ็น Token ด้วย Secret ตาม Role
+→ ส่ง Token กลับไปให้ Frontend/Postman
+```
+
+### ลำดับตอนเรียก API ที่ต้อง Login
+
+```text
+Frontend/Postman ส่ง Bearer Token
+→ Backend ตรวจลายเซ็น Token
+→ อ่าน id เพื่อรู้ User ID
+→ อ่าน role เพื่อรู้ระดับสิทธิ์
+→ อนุญาตหรือปฏิเสธการใช้งาน Route
+```
+
+ตัวอย่าง เมื่ออ่าน `id` จาก Token:
+
+```js
+const userId = payload.id
+```
+
+ถ้า `payload.id` เป็น `15` ระบบจะนำเลขนี้ไปค้น User ใน Database ได้ ต้องตรวจ Token ด้วย `jwt.verify()` ก่อนเสมอ จึงจะเชื่อข้อมูล `id` และ `role` ได้
+
+### CHECKPOINT 3 — JWT
 
 ```powershell
 node --check src/utils/jwt.js
@@ -291,115 +382,99 @@ node --check src/utils/jwt.js
 
 ---
 
-# STEP 6 — เพิ่ม Login ใน Service
+# STEP 6 — เพิ่ม Service สำหรับ Login
 
-เพิ่ม import ด้านบนของ `src/services/auth.service.js`:
-
-```js
-import { signAccessToken } from "../utils/jwt.js";
-```
-
-เพิ่ม function นี้ท้ายไฟล์:
+เพิ่มท้าย `src/services/users.service.js`:
 
 ```js
-export async function loginUser(data) {
-  const userWithPassword = await prisma.user.findUnique({
-    where: {
-      email: data.email,
-    },
-  });
-
-  if (!userWithPassword) {
-    throw createServiceError(401, "Email หรือ password ไม่ถูกต้อง");
-  }
-
-  const passwordMatches = await bcrypt.compare(
-    data.password,
-    userWithPassword.passwordHash,
-  );
-
-  if (!passwordMatches) {
-    throw createServiceError(401, "Email หรือ password ไม่ถูกต้อง");
-  }
-
-  const token = signAccessToken(userWithPassword);
-
-  const user = await prisma.user.findUnique({
-    where: {
-      id: userWithPassword.id,
-    },
-    select: publicUserSelect,
-  });
-
-  return {
-    token: token,
-    user: user,
-  };
+export const findPublicUserById = async (userId) => {
+  return await prisma.user.findUnique({
+    where: { id: userId },
+    select: publicUserSelect
+  })
 }
 ```
 
-Service ทำงานตามลำดับ:
-
-```text
-หา User → bcrypt เปรียบเทียบ Password → สร้าง JWT → คืน Token/User
-```
+Service ยังทำเฉพาะการอ่านข้อมูล ไม่ compare Password และไม่สร้าง JWT
 
 ---
 
 # STEP 7 — เพิ่ม Login Controller
 
-แก้ import ด้านบนของ `src/controllers/auth.controller.js`:
+เพิ่ม imports ใน `src/controllers/auth.controller.js`:
 
 ```js
 import {
-  loginUser,
-  registerUser,
-} from "../services/auth.service.js";
+  createAdminDeptToken,
+  createAdminSystemToken,
+  createStaffToken
+} from '../utils/jwt.js'
 ```
 
-เพิ่ม function นี้ท้ายไฟล์:
+เพิ่ม `findPublicUserById` ใน Service import แล้ววาง function นี้ท้าย Controller:
 
 ```js
 export async function login(req, res, next) {
   try {
-    const result = await loginUser(req.body);
+    const userWithPassword = await findUserByEmail(req.body.email);
 
-    return res.status(200).json({
-      token: result.token,
-      user: result.user,
-    });
-  } catch (error) {
-    if (error.statusCode) {
-      return res.status(error.statusCode).json({
-        message: error.message,
+    if (!userWithPassword) {
+      return res.status(401).json({
+        message: "Invalid email or password",
       });
     }
 
+    const passwordMatches = await bcrypt.compare(
+      req.body.password,
+      userWithPassword.passwordHash,
+    );
+
+    if (!passwordMatches) {
+      return res.status(401).json({
+        message: "Invalid email or password",
+      });
+    }
+
+    let token
+
+    if (userWithPassword.role === 'STAFF') {
+      token = await createStaffToken(userWithPassword)
+    }
+
+    if (userWithPassword.role === 'ADMIN_DEPT') {
+      token = await createAdminDeptToken(userWithPassword)
+    }
+
+    if (userWithPassword.role === 'ADMIN_SYSTEM') {
+      token = await createAdminSystemToken(userWithPassword)
+    }
+    const user = await findPublicUserById(userWithPassword.id);
+
+    return res.status(200).json({
+      token: token,
+      user: user,
+    });
+  } catch (error) {
     next(error);
   }
 }
+```
+
+Login flow:
+
+```text
+Controller → Service หา User
+→ Controller bcrypt.compare
+→ Controller สร้าง JWT ตาม Role
+→ Service อ่าน Public User
+→ Controller ตอบ 200
 ```
 
 ---
 
 # STEP 8 — เพิ่ม Login Route
 
-แก้ import ใน `src/routes/auth.route.js`:
-
-```js
-import {
-  login,
-  register,
-} from "../controllers/auth.controller.js";
-```
-
-เพิ่ม Route ต่อจาก Register:
-
-```js
-router.post("/login", login);
-```
-
-ไฟล์ Router สุดท้าย:
+ไฟล์สุดท้าย `src/routes/auth.route.js`:
 
 ```js
 import { Router } from "express";
@@ -416,18 +491,16 @@ router.post("/login", login);
 export default router;
 ```
 
-### CHECKPOINT 5 — Login Syntax
+### CHECKPOINT 4 — Login Syntax
 
 ```powershell
 node --check src/utils/jwt.js
-node --check src/services/auth.service.js
+node --check src/services/users.service.js
 node --check src/controllers/auth.controller.js
 node --check src/routes/auth.route.js
 ```
 
-ต้องไม่มี SyntaxError และ Server ต้องยังเปิดได้
-
-### CHECKPOINT 6 — Postman Login
+### CHECKPOINT 5 — Postman Login
 
 ```text
 POST http://localhost:8000/auth/login
@@ -440,30 +513,47 @@ POST http://localhost:8000/auth/login
 }
 ```
 
-ต้องได้ `200 OK` พร้อม `token`
-
-Password ผิดต้องได้ `401 Unauthorized`
-
-Post-response Script สำหรับเก็บ Token:
-
-```js
-const body = pm.response.json();
-pm.environment.set("token", body.token);
-pm.environment.set("userId", body.user.id);
-```
+ต้องได้ `200` พร้อม Token ส่วน Password ผิดต้องได้ `401` และข้อความอังกฤษ `Invalid email or password`
 
 ---
 
-# CHECKPOINT ปิดงาน Auth
+# STEP 9 — `.gitignore`
+
+```gitignore
+# Dependencies
+node_modules/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Generated Prisma Client
+generated/prisma/
+
+# Build, coverage, and log files
+dist/
+coverage/
+*.log
+
+# Operating system files
+.DS_Store
+Thumbs.db
+```
+
+`.env` ต้องไม่ขึ้น Git เพราะเก็บ Database URL และ JWT Secrets ทั้งสาม Role ส่วน `.env.example` เก็บเฉพาะชื่อ Keys โดยไม่ใส่ Secret จริง
+
+# CHECKPOINT ปิด Auth
 
 | รายการ | ผลที่ต้องได้ |
 |---|---|
 | `GET /api/health` | `200` |
-| `POST /auth/register` | `201` |
-| Register Email ซ้ำ | `409` |
-| User ใหม่ | Role `STAFF` |
+| `POST /auth/register` | `201`, Role `STAFF` |
+| Email ซ้ำ | `409`, English message |
 | `POST /auth/login` | `200` + JWT |
-| Login Password ผิด | `401` |
-| Response | ไม่มี `passwordHash` |
+| Password ผิด | `401`, English message |
+| JWT payload | มี `id` และ `role` |
+| Service | มีเฉพาะ Prisma data access |
+| `.gitignore` | ไม่เก็บ `.env`, generated files, logs |
 
-ผ่านครบแล้วจึงถือว่า `/auth` เสร็จ และค่อยเริ่มคู่มือ `/users` แยกอีกไฟล์
+ผ่านครบแล้วจึงเริ่ม `/users` ในคู่มือแยก
