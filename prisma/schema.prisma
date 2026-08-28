@@ -1,0 +1,182 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  AGENT
+  EMPLOYEE
+}
+
+enum TicketStatus {
+  SUBMITTED
+  UNDER_REVIEW
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+  REJECTED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+// ---------------- Shared tables ----------------
+
+model Department {
+  id           Int           @id @default(autoincrement())
+  name         String        @unique
+  users        User[]
+  requestTypes RequestType[]
+
+  @@map("departments")
+}
+
+model User {
+  id           Int         @id @default(autoincrement())
+  name         String
+  email        String      @unique
+  passwordHash String      @map("password_hash")
+  role         Role        @default(EMPLOYEE)
+  departmentId Int?        @map("department_id")
+  department   Department? @relation(fields: [departmentId], references: [id])
+
+  createdTickets  Ticket[]        @relation("TicketCreatedBy")
+  assignedTickets Ticket[]        @relation("TicketAssignedTo")
+  comments        Comment[]
+  notifications   Notification[]
+  roomBookings    RoomBooking[]
+  organizedEvents Event[]
+  eventAttendance EventAttendee[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("users")
+}
+
+// ---------------- Ticketing module ----------------
+
+model RequestType {
+  id                Int        @id @default(autoincrement())
+  departmentId      Int        @map("department_id")
+  department        Department @relation(fields: [departmentId], references: [id])
+  name              String
+  description       String?
+  formSchema        Json       @map("form_schema")
+  defaultAssigneeId Int?       @map("default_assignee_id")
+
+  tickets Ticket[]
+
+  @@map("request_types")
+}
+
+model Ticket {
+  id            Int         @id @default(autoincrement())
+  requestTypeId Int         @map("request_type_id")
+  requestType   RequestType @relation(fields: [requestTypeId], references: [id])
+
+  title        String
+  description  String?
+  status       TicketStatus @default(SUBMITTED)
+  priority     Priority     @default(MEDIUM)
+  customFields Json         @map("custom_fields")
+
+  createdById  Int   @map("created_by")
+  createdBy    User  @relation("TicketCreatedBy", fields: [createdById], references: [id])
+  assignedToId Int?  @map("assigned_to")
+  assignedTo   User? @relation("TicketAssignedTo", fields: [assignedToId], references: [id])
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("tickets")
+}
+
+// ---------------- Room booking module ----------------
+
+model Room {
+  id       Int     @id @default(autoincrement())
+  name     String
+  location String?
+  capacity Int
+
+  bookings RoomBooking[]
+
+  @@map("rooms")
+}
+
+model RoomBooking {
+  id        Int      @id @default(autoincrement())
+  roomId    Int      @map("room_id")
+  room      Room     @relation(fields: [roomId], references: [id])
+  userId    Int      @map("user_id")
+  user      User     @relation(fields: [userId], references: [id])
+  startTime DateTime @map("start_time")
+  endTime   DateTime @map("end_time")
+  status    String   @default("confirmed")
+
+  @@map("room_bookings")
+}
+
+// ---------------- Events module ----------------
+
+model Event {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String?
+  startTime   DateTime @map("start_time")
+  endTime     DateTime @map("end_time")
+  organizerId Int      @map("organizer_id")
+  organizer   User     @relation(fields: [organizerId], references: [id])
+  status      String   @default("planned")
+
+  attendees EventAttendee[]
+
+  @@map("events")
+}
+
+model EventAttendee {
+  eventId    Int    @map("event_id")
+  event      Event  @relation(fields: [eventId], references: [id])
+  userId     Int    @map("user_id")
+  user       User   @relation(fields: [userId], references: [id])
+  rsvpStatus String @default("invited") @map("rsvp_status")
+
+  @@id([eventId, userId])
+  @@map("event_attendees")
+}
+
+// ---------------- Cross-cutting shared tables ----------------
+// entityType + entityId let one table hold comments for tickets, bookings, or events
+// without a separate comments table per module. Not enforced as a DB-level FK.
+
+model Comment {
+  id         Int      @id @default(autoincrement())
+  entityType String   @map("entity_type")
+  entityId   Int      @map("entity_id")
+  userId     Int      @map("user_id")
+  user       User     @relation(fields: [userId], references: [id])
+  text       String
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@map("comments")
+}
+
+model Notification {
+  id        Int       @id @default(autoincrement())
+  userId    Int       @map("user_id")
+  user      User      @relation(fields: [userId], references: [id])
+  message   String
+  readAt    DateTime? @map("read_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  @@map("notifications")
+}
