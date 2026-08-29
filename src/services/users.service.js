@@ -1,31 +1,32 @@
 // รวมคำสั่งที่ติดต่อกับตาราง User ไว้ที่เดียว
-import { prisma } from '../lib/prisma.js'
+import { prisma } from "../lib/prisma.js";
 
 const publicUserSelect = {
   id: true,
-  name: true,
+  firstname: true,
+  lastname: true,
   email: true,
   role: true,
   departmentId: true,
-  createdAt: true
-}
+  createdAt: true,
+};
 
 export const findUserByEmail = async (email) => {
   return await prisma.user.findUnique({
-    where: { email: email }
-  })
-}
+    where: { email: email },
+  });
+};
 
 export const createUser = async (userData) => {
   return await prisma.user.create({
     data: userData,
-    select: publicUserSelect
-  })
-}
+    select: publicUserSelect,
+  });
+};
 
 export const findPublicUserById = async (userId) => {
   return await prisma.user.findUnique({
     where: { id: userId },
-    select: publicUserSelect
-  })
-}
+    select: publicUserSelect,
+  });
+};

@@ -9,21 +9,21 @@ import {
   createAdminSystemToken,
   createStaffToken,
 } from "../utils/jwt.js";
+import createHttpError from "http-errors";
 
 export async function register(req, res, next) {
   try {
     const existingUser = await findUserByEmail(req.body.email);
 
     if (existingUser) {
-      return res.status(409).json({
-        message: "Email is already in use",
-      });
+      throw createHttpError(409, "Email already exists");
     }
 
     const passwordHash = await bcrypt.hash(req.body.password, 12);
 
     const user = await createUser({
-      name: req.body.name,
+      firstname: req.body.firstname,
+      lastname: req.body.lastname,
       email: req.body.email,
       passwordHash: passwordHash,
       departmentId: req.body.departmentId,
@@ -42,22 +42,21 @@ export async function register(req, res, next) {
 export async function login(req, res, next) {
   try {
     const userWithPassword = await findUserByEmail(req.body.email);
+    let isMatch = false;
 
-    if (!userWithPassword) {
-      return res.status(401).json({
-        message: "Invalid email or password",
-      });
+    if (userWithPassword) {
+      try {
+        isMatch = await bcrypt.compare(
+          req.body.password,
+          userWithPassword.passwordHash,
+        );
+      } catch {
+        isMatch = false;
+      }
     }
 
-    const passwordMatches = await bcrypt.compare(
-      req.body.password,
-      userWithPassword.passwordHash,
-    );
-
-    if (!passwordMatches) {
-      return res.status(401).json({
-        message: "Invalid email or password",
-      });
+    if (!userWithPassword || !isMatch) {
+      throw createHttpError(401, "Invalid credentials");
     }
 
     let token;
