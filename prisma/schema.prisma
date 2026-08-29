@@ -38,6 +38,14 @@ enum EventStatus {
   CANCEL
 }
 
+enum EventAttendeeStatus {
+  INVITED
+  ACCEPTED
+  DECLINED
+  ATTENDED
+  ABSENT
+}
+
 // ---------------- Shared tables ----------------
 
 model Department {
@@ -51,8 +59,8 @@ model Department {
 
 model User {
   id           Int         @id @default(autoincrement())
-  firstname         String
-  lastname          String
+  firstname    String
+  lastname     String
   phone        String?
   email        String      @unique
   passwordHash String      @map("password_hash")
@@ -155,11 +163,11 @@ model Event {
 }
 
 model EventAttendee {
-  eventId    Int    @map("event_id")
-  event      Event  @relation(fields: [eventId], references: [id])
-  userId     Int    @map("user_id")
-  user       User   @relation(fields: [userId], references: [id])
-  rsvpStatus String @default("invited") @map("rsvp_status")
+  eventId    Int                 @map("event_id")
+  event      Event               @relation(fields: [eventId], references: [id])
+  userId     Int                 @map("user_id")
+  user       User                @relation(fields: [userId], references: [id])
+  rsvpStatus EventAttendeeStatus @default(INVITED) @map("rsvp_status")
 
   @@id([eventId, userId])
   @@map("event_attendees")

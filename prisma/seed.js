@@ -645,10 +645,10 @@ async function main() {
     });
     await prisma.eventAttendee.createMany({
       data: [
-        { eventId: townHall.id, userId: nid.id, rsvpStatus: "going" },
-        { eventId: townHall.id, userId: somchai.id, rsvpStatus: "going" },
-        { eventId: townHall.id, userId: wipa.id, rsvpStatus: "maybe" },
-        { eventId: townHall.id, userId: thanakorn.id, rsvpStatus: "invited" },
+        { eventId: townHall.id, userId: nid.id, rsvpStatus: "ACCEPTED" },
+        { eventId: townHall.id, userId: somchai.id, rsvpStatus: "INVITED" },
+        { eventId: townHall.id, userId: wipa.id, rsvpStatus: "INVITED" },
+        { eventId: townHall.id, userId: thanakorn.id, rsvpStatus: "DECLINED" },
       ],
       skipDuplicates: true,
     });
@@ -669,8 +669,8 @@ async function main() {
     });
     await prisma.eventAttendee.createMany({
       data: [
-        { eventId: created.id, userId: somying.id, rsvpStatus: "going" },
-        { eventId: created.id, userId: anucha.id, rsvpStatus: "not_going" },
+        { eventId: created.id, userId: somying.id, rsvpStatus: "ACCEPTED" },
+        { eventId: created.id, userId: anucha.id, rsvpStatus: "DECLINED" },
       ],
       skipDuplicates: true,
     });
