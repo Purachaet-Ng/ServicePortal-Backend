@@ -7,6 +7,8 @@ export default defineConfig({
   schema: "prisma/schema.prisma",
   migrations: {
     path: "prisma/migrations",
+    // Lets `prisma migrate reset` repopulate the database in one step.
+    seed: "node prisma/seed.js",
   },
   datasource: {
     url: process.env["DATABASE_URL"],
