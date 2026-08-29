@@ -11,6 +11,10 @@ export default defineConfig({
     seed: "node prisma/seed.js",
   },
   datasource: {
-    url: process.env["DATABASE_URL"],
+    // The CLI (migrate, db push, studio) connects DIRECTLY, not through the
+    // Neon pooler: pooled connections cannot hold the advisory lock that
+    // `migrate` takes, which fails with P1002. The app itself still uses the
+    // pooled DATABASE_URL via the adapter in src/lib/prisma.js.
+    url: process.env["DIRECT_URL"] ?? process.env["DATABASE_URL"],
   },
 });
