@@ -26,7 +26,7 @@ export async function register(req, res, next) {
       lastname: req.body.lastname,
       email: req.body.email,
       passwordHash: passwordHash,
-      departmentId: req.body.departmentId,
+      departmentId: Number(req.body.departmentId),
       role: "STAFF",
     });
 
