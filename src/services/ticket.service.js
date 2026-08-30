@@ -1,9 +1,5 @@
 import { prisma } from '../lib/prisma.js';
 
-export async function readAllTicket(req, res) {
-  return await res.status(200).json({ message: `Read all ticket` });
-}
-
 export async function createTicket(payload) {
   const {
     requestTypeId,
@@ -14,7 +10,7 @@ export async function createTicket(payload) {
     assignedToId,
   } = payload;
 
-  return prisma.ticket.create({
+  return prisma.tickets.create({
     data: {
       requestTypeId,
       title,
@@ -24,4 +20,8 @@ export async function createTicket(payload) {
       assignedToId,
     },
   });
+}
+
+export async function readAllTicket(req, res) {
+  return await res.status(200).json({ message: `Read all ticket` });
 }
