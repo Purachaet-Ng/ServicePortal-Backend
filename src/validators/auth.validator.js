@@ -12,8 +12,8 @@ const name = (field) =>
 const email = z
   .string()
   .trim()
-  .pipe(z.email({ error: "Invalid email format" }))
-  .toLowerCase();
+  .toLowerCase()
+  .pipe(z.email({ error: "Invalid email format" }));
 
 const password = z
   .string({ error: "password is required" })

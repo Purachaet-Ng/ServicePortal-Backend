@@ -1,6 +1,9 @@
 import express from "express";
 import cors from "cors";
 import authRouter from "./routes/auth.route.js";
+import userRouter from "./routes/users.route.js";
+import { pathNotFound } from "./middlewares/pathNotFound.js";
+import { errorHandler } from "./middlewares/errorHandler.js";
 const app = express();
 
 app.use(express.json());
@@ -19,7 +22,7 @@ app.get(`${API}/health`, (req, res) => {
 
 app.use(`${API}/auth`, authRouter);
 
-// app.use("/users");
+app.use(`${API}/users`, userRouter);
 
 // app.use("/reserves");
 
@@ -33,7 +36,7 @@ app.use(`${API}/auth`, authRouter);
 
 // app.use(validater); all route
 
-// app.use(pathNotFound);
-// app.use(errorHandler);
+app.use(pathNotFound);
+app.use(errorHandler);
 
 export default app;
