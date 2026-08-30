@@ -1,5 +1,11 @@
+<<<<<<< HEAD
 import express from 'express';
 import cors from 'cors';
+=======
+import express from "express";
+import cors from "cors";
+import authRouter from "./routes/auth.route.js";
+>>>>>>> origin
 const app = express();
 
 import ticketsRoutes from './routes/tickets.route.js';
@@ -18,7 +24,7 @@ app.get(`${API}/health`, (req, res) => {
   res.status(200).json({ status: 'ok' });
 });
 
-// app.use("/auth");
+app.use(`${API}/auth`, authRouter);
 
 // app.use("/users");
 

@@ -1,7 +1,5 @@
 import z from "zod";
-
-const positiveId = (message) =>
-  z.coerce.number({ error: message }).int(message).positive(message);
+import { positiveId } from "./common.validator.js";
 
 const phoneRegex = /^(?:\+66|0)[689]\d[- ]?\d{3}[- ]?\d{4}$/;
 
