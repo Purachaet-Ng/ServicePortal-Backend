@@ -13,20 +13,22 @@ import createHttpError from "http-errors";
 
 export async function register(req, res, next) {
   try {
-    const existingUser = await findUserByEmail(req.body.email);
+    const newUserData = req.valid.body;
+    const existingUser = await findUserByEmail(newUserData.email);
 
     if (existingUser) {
       throw createHttpError(409, "Email already exists");
     }
 
-    const passwordHash = await bcrypt.hash(req.body.password, 12);
+    const passwordHash = await bcrypt.hash(newUserData.password, 12);
 
     const user = await createUser({
-      firstname: req.body.firstname,
-      lastname: req.body.lastname,
-      email: req.body.email,
+      firstname: newUserData.firstname,
+      lastname: newUserData.lastname,
+      phone: newUserData.phone,
+      email: newUserData.email,
       passwordHash: passwordHash,
-      departmentId: Number(req.body.departmentId),
+      departmentId: newUserData.departmentId,
       role: "STAFF",
     });
 
@@ -41,15 +43,13 @@ export async function register(req, res, next) {
 
 export async function login(req, res, next) {
   try {
-    const userWithPassword = await findUserByEmail(req.body.email);
+    const { email, password } = req.valid.body;
+    const userWithPassword = await findUserByEmail(email);
     let isMatch = false;
 
     if (userWithPassword) {
       try {
-        isMatch = await bcrypt.compare(
-          req.body.password,
-          userWithPassword.passwordHash,
-        );
+        isMatch = await bcrypt.compare(password, userWithPassword.passwordHash);
       } catch {
         isMatch = false;
       }

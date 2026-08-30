@@ -5,7 +5,7 @@ import {
   findPublicUserById,
   findUserByEmail,
   updateUserById,
-  deleteUserById
+  deleteUserById,
 } from "../services/users.service.js";
 import bcrypt from "bcrypt";
 
@@ -84,7 +84,7 @@ export async function updateUserRole(req, res, next) {
 
 export async function createUserByAdmin(req, res, next) {
   try {
-    const newUserData = req.body;
+    const newUserData = req.valid.body;
     const userWithSameEmail = await findUserByEmail(newUserData.email);
 
     if (userWithSameEmail) {
