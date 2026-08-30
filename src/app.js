@@ -1,6 +1,9 @@
 import express from "express";
 import cors from "cors";
+import reserveRoute from "./routes/reserve.route.js";
+
 const app = express();
+
 
 app.use(express.json());
 app.use(
@@ -20,7 +23,7 @@ app.get(`${API}/health`, (req, res) => {
 
 // app.use("/users");
 
-// app.use("/reserves");
+app.use("/reserves", reserveRoute);
 
 // app.use("/tickets");
 
