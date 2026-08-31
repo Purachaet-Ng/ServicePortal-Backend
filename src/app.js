@@ -4,6 +4,8 @@ import authRouter from "./routes/auth.route.js";
 import userRouter from "./routes/users.route.js";
 import { pathNotFound } from "./middlewares/pathNotFound.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
+import departmentRouter from "./routes/departments.route.js";
+
 const app = express();
 
 app.use(express.json());
@@ -28,7 +30,7 @@ app.use(`${API}/users`, userRouter);
 
 // app.use("/tickets");
 
-// app.use("/departments");
+app.use(`${API}/departments`, departmentRouter);
 
 // app.use("/events");
 
