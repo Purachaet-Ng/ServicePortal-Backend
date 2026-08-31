@@ -1,4 +1,4 @@
-import { prisma } from '../lib/prisma.js';
+import { prisma } from "../lib/prisma.js";
 
 export async function createTicket(payload) {
   const { requestTypeId, title, description, customFields, createdById } =
@@ -35,20 +35,20 @@ export async function readTicket(user) {
 }
 function buildTicketWhereByRole(user) {
   switch (user.role) {
-    case 'ADMIN_SYSTEM':
+    case "ADMIN_SYSTEM":
       return {};
-    case 'ADMIN_DEPT':
+    case "ADMIN_DEPT":
       if (!user.departmentId) {
-        throw new Error('Admin dept must belong to a department');
+        throw new Error("Admin dept must belong to a department");
       }
       return {
         requestType: {
           departmentId: user.departmentId,
         },
       };
-    case 'STAFF':
+    case "STAFF":
       if (!user.departmentId) {
-        throw new Error('Admin staff must belong to a department');
+        throw new Error("Admin staff must belong to a department");
       }
       return {
         assignedToId: user.id,

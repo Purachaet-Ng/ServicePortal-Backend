@@ -1,4 +1,4 @@
-import { readTicket, createTicket } from '../services/ticket.service.js';
+import { readTicket, createTicket } from "../services/ticket.service.js";
 
 export async function ticketCreate(req, res, next) {
   try {

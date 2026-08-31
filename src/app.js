@@ -1,24 +1,24 @@
-import express from 'express';
-import cors from 'cors';
-import authRouter from './routes/auth.route.js';
-import userRouter from './routes/users.route.js';
-import ticketsRoutes from './routes/tickets.route.js';
-import { pathNotFound } from './middlewares/pathNotFound.js';
-import { errorHandler } from './middlewares/errorHandler.js';
+import express from "express";
+import cors from "cors";
+import authRouter from "./routes/auth.route.js";
+import userRouter from "./routes/users.route.js";
+import ticketsRoutes from "./routes/tickets.route.js";
+import { pathNotFound } from "./middlewares/pathNotFound.js";
+import { errorHandler } from "./middlewares/errorHandler.js";
 const app = express();
 
 app.use(express.json());
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN ?? 'http://localhost:5173',
+    origin: process.env.CORS_ORIGIN ?? "http://localhost:5173",
     credentials: true,
   }),
 );
 
-const API = '/api';
+const API = "/api";
 
 app.get(`${API}/health`, (req, res) => {
-  res.status(200).json({ status: 'ok' });
+  res.status(200).json({ status: "ok" });
 });
 
 app.use(`${API}/auth`, authRouter);
