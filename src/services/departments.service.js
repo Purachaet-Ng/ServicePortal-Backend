@@ -11,3 +11,10 @@ export const findAllDepartments = async () => {
     orderBy: { id: "asc" },
   });
 };
+
+export const findDepartmentById = async (departmentId) => {
+  return await prisma.department.findUnique({
+    where: { id: departmentId },
+    select: departmentSelect,
+  });
+};
