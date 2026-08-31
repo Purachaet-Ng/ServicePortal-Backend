@@ -1,17 +1,39 @@
-// Fiat : Ticket
 import express from "express";
+import { authenticate, authorize } from "../middlewares/auth.middleware.js";
+import { validate } from "../middlewares/validate.js";
+import {
+  createTicketSchema,
+  updateTicketStatusSchema,
+  assignTicketSchema,
+} from "../validators/ticket.validator.js";
+import { idParams } from "../validators/common.validator.js";
 import {
   ticketDashboard,
-  ticketUpdate,
+  ticketUpdateStatus,
   ticketCreate,
+  ticketUpdateAssign,
 } from "../controllers/tickets.controller.js";
 
 const router = express.Router();
 
-router.post("/new", ticketCreate);
-router.get("/", ticketDashboard);
-// router.get('/', import Middleware Auth User เข้ามา, ticketDashboard);
+router.use(authenticate);
 
-router.patch("/:id", ticketUpdate);
+router.get("/", ticketDashboard);
+
+router.post("/", validate({ body: createTicketSchema }), ticketCreate);
+
+router.patch(
+  "/:id/status",
+  authorize("ADMIN_SYSTEM", "ADMIN_DEPT", "STAFF"),
+  validate({ params: idParams, body: updateTicketStatusSchema }),
+  ticketUpdateStatus,
+);
+
+router.patch(
+  "/:id/assign",
+  authorize("ADMIN_SYSTEM", "ADMIN_DEPT"),
+  validate({ params: idParams, body: assignTicketSchema }),
+  ticketUpdateAssign,
+);
 
 export default router;
