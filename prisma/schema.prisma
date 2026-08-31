@@ -8,9 +8,9 @@ datasource db {
 }
 
 enum Role {
-  ADMIN
-  AGENT
-  EMPLOYEE
+  ADMIN_SYSTEM
+  ADMIN_DEPT
+  STAFF
 }
 
 enum TicketStatus {
@@ -29,6 +29,23 @@ enum Priority {
   URGENT
 }
 
+enum EventStatus {
+  PENDING
+  APPROVE
+  IN_PROGRESS
+  LIVE
+  CLOSED
+  CANCEL
+}
+
+enum EventAttendeeStatus {
+  INVITED
+  ACCEPTED
+  DECLINED
+  ATTENDED
+  ABSENT
+}
+
 // ---------------- Shared tables ----------------
 
 model Department {
@@ -42,10 +59,12 @@ model Department {
 
 model User {
   id           Int         @id @default(autoincrement())
-  name         String
+  firstname    String
+  lastname     String
+  phone        String?
   email        String      @unique
   passwordHash String      @map("password_hash")
-  role         Role        @default(EMPLOYEE)
+  role         Role        @default(STAFF)
   departmentId Int?        @map("department_id")
   department   Department? @relation(fields: [departmentId], references: [id])
 
@@ -121,7 +140,7 @@ model RoomBooking {
   user      User     @relation(fields: [userId], references: [id])
   startTime DateTime @map("start_time")
   endTime   DateTime @map("end_time")
-  status    String   @default("confirmed")
+  status    Boolean  @default(true)
 
   @@map("room_bookings")
 }
@@ -129,14 +148,14 @@ model RoomBooking {
 // ---------------- Events module ----------------
 
 model Event {
-  id          Int      @id @default(autoincrement())
+  id          Int         @id @default(autoincrement())
   title       String
   description String?
-  startTime   DateTime @map("start_time")
-  endTime     DateTime @map("end_time")
-  organizerId Int      @map("organizer_id")
-  organizer   User     @relation(fields: [organizerId], references: [id])
-  status      String   @default("planned")
+  startTime   DateTime    @map("start_time")
+  endTime     DateTime    @map("end_time")
+  organizerId Int         @map("organizer_id")
+  organizer   User        @relation(fields: [organizerId], references: [id])
+  status      EventStatus @default(PENDING)
 
   attendees EventAttendee[]
 
@@ -144,11 +163,11 @@ model Event {
 }
 
 model EventAttendee {
-  eventId    Int    @map("event_id")
-  event      Event  @relation(fields: [eventId], references: [id])
-  userId     Int    @map("user_id")
-  user       User   @relation(fields: [userId], references: [id])
-  rsvpStatus String @default("invited") @map("rsvp_status")
+  eventId    Int                 @map("event_id")
+  event      Event               @relation(fields: [eventId], references: [id])
+  userId     Int                 @map("user_id")
+  user       User                @relation(fields: [userId], references: [id])
+  rsvpStatus EventAttendeeStatus @default(INVITED) @map("rsvp_status")
 
   @@id([eventId, userId])
   @@map("event_attendees")
