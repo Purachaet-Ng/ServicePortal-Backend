@@ -1,3 +1,4 @@
+import createHttpError from "http-errors";
 import { prisma } from "../lib/prisma.js";
 
 export async function createTicket(payload) {
@@ -19,7 +20,7 @@ export async function readTicket(user) {
   const where = buildTicketWhereByRole(user);
   return prisma.ticket.findMany({
     where,
-    // orderBy: { createdAt: 'desc' },
+    // orderBy: { createdAt: 'desc' }, หากจะเอาล่าสุดขึ้นก่อนค่อยเปิด
     include: {
       requestType: {
         select: { id: true, name: true, departmentId: true },
@@ -39,7 +40,7 @@ function buildTicketWhereByRole(user) {
       return {};
     case "ADMIN_DEPT":
       if (!user.departmentId) {
-        throw new Error("Admin dept must belong to a department");
+        throw createHttpError(400, "กรุณาส่ง departmentId สำหรับ role นี้");
       }
       return {
         requestType: {
@@ -48,13 +49,34 @@ function buildTicketWhereByRole(user) {
       };
     case "STAFF":
       if (!user.departmentId) {
-        throw new Error("Admin staff must belong to a department");
+        throw createHttpError(400, "กรุณาส่ง departmentId สำหรับ role นี้");
       }
       return {
         assignedToId: user.id,
       };
-    // role อื่นค่อยเพิ่มทีหลัง
     default:
-      return {};
+      throw createHttpError(403, "ไม่มีสิทธิ์เข้าถึง ticket");
   }
+}
+
+export async function updateTicket(ticketId, assignedToId) {
+  console.log(ticketId, assignedToId);
+
+  const updated = prisma.ticket.update({
+    where: { id: ticketId },
+    data: { assignedToId },
+    include: {
+      requestType: {
+        select: { id: true, name: true, departmentId: true },
+      },
+      createdBy: {
+        select: { id: true, firstname: true, lastname: true },
+      },
+      assignedTo: {
+        select: { id: true, firstname: true, lastname: true },
+      },
+    },
+  });
+
+  return updated;
 }

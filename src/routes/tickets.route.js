@@ -2,17 +2,16 @@
 import express from "express";
 import {
   ticketDashboard,
-  ticketById,
+  ticketUpdate,
   ticketCreate,
 } from "../controllers/tickets.controller.js";
 
 const router = express.Router();
 
+router.post("/new", ticketCreate);
 router.get("/", ticketDashboard);
 // router.get('/', import Middleware Auth User เข้ามา, ticketDashboard);
 
-router.post("/new", ticketCreate);
-
-// router.patch('/:id', ticketById);
+router.patch("/:id", ticketUpdate);
 
 export default router;
