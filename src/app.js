@@ -1,11 +1,6 @@
-<<<<<<< HEAD
 import express from 'express';
 import cors from 'cors';
-=======
-import express from "express";
-import cors from "cors";
-import authRouter from "./routes/auth.route.js";
->>>>>>> origin
+import authRouter from './routes/auth.route.js';
 const app = express();
 
 import ticketsRoutes from './routes/tickets.route.js';

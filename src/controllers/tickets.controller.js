@@ -1,16 +1,25 @@
-import { readAllTicket, createTicket } from '../services/ticket.service.js';
+import { readTicket, createTicket } from '../services/ticket.service.js';
 
-export async function ticketCreate(req, res) {
-  const payload = req.body;
-  const ticket = await createTicket(payload);
-  return res.status(201).json({ message: ticket });
+export async function ticketCreate(req, res, next) {
+  try {
+    const ticket = await createTicket(req.body);
+    return res.status(201).json({ message: ticket });
+  } catch (err) {
+    next(err);
+  }
 }
 
-export async function ticketDashboard(req, res) {
-  const payload = req.body;
-  const data = await readAllTicket(payload);
+export async function ticketDashboard(req, res, next) {
+  const user = {
+    id: Number(req.query.userId),
+    role: req.query.role,
+    departmentId: req.query.departmentId
+      ? Number(req.query.departmentId)
+      : null,
+  };
 
-  return res.status(201).json(data);
+  const ticket = await readTicket(user);
+  res.json({ ticket });
 }
 
 export async function ticketById(req, res) {
