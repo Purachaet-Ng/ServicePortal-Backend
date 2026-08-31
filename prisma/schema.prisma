@@ -29,6 +29,15 @@ enum Priority {
   URGENT
 }
 
+// Shared by room_bookings and car_bookings. Every reservation is created
+// PENDING and only an admin moves it on — see the state machine in API.md.
+enum ReservationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
 enum EventStatus {
   PENDING
   APPROVE
@@ -73,8 +82,13 @@ model User {
   comments        Comment[]
   notifications   Notification[]
   roomBookings    RoomBooking[]
+  carBookings     CarBooking[]
   organizedEvents Event[]
   eventAttendance EventAttendee[]
+
+  // Reservations this user approved or rejected, as an admin.
+  approvedRoomBookings RoomBooking[] @relation("RoomBookingApprover")
+  approvedCarBookings  CarBooking[]  @relation("CarBookingApprover")
 
   createdAt DateTime @default(now()) @map("created_at")
 
@@ -119,7 +133,11 @@ model Ticket {
   @@map("tickets")
 }
 
-// ---------------- Room booking module ----------------
+// ---------------- Reserve module: rooms and cars ----------------
+// Rooms and cars stay separate tables — they hold different columns and are
+// owned by different people. They meet in the UI, not in the database. The one
+// thing both must get identical is the overlap check, which lives in a single
+// shared helper (src/utils/timeOverlap.js) that both services call.
 
 model Room {
   id       Int     @id @default(autoincrement())
@@ -133,16 +151,52 @@ model Room {
 }
 
 model RoomBooking {
-  id        Int      @id @default(autoincrement())
-  roomId    Int      @map("room_id")
-  room      Room     @relation(fields: [roomId], references: [id])
-  userId    Int      @map("user_id")
-  user      User     @relation(fields: [userId], references: [id])
-  startTime DateTime @map("start_time")
-  endTime   DateTime @map("end_time")
-  status    Boolean  @default(true)
+  id           Int               @id @default(autoincrement())
+  roomId       Int               @map("room_id")
+  room         Room              @relation(fields: [roomId], references: [id])
+  userId       Int               @map("user_id")
+  user         User              @relation(fields: [userId], references: [id])
+  startTime    DateTime          @map("start_time")
+  endTime      DateTime          @map("end_time")
+  status       ReservationStatus @default(PENDING)
+  approvedById Int?              @map("approved_by")
+  approvedBy   User?             @relation("RoomBookingApprover", fields: [approvedById], references: [id])
+  approvedAt   DateTime?         @map("approved_at")
+  createdAt    DateTime          @default(now()) @map("created_at")
 
+  // The overlap query filters on roomId and both times together.
+  @@index([roomId, startTime, endTime])
   @@map("room_bookings")
+}
+
+model Car {
+  id       Int     @id @default(autoincrement())
+  name     String
+  plate    String  @unique
+  seats    Int
+  location String?
+
+  bookings CarBooking[]
+
+  @@map("cars")
+}
+
+model CarBooking {
+  id           Int               @id @default(autoincrement())
+  carId        Int               @map("car_id")
+  car          Car               @relation(fields: [carId], references: [id])
+  userId       Int               @map("user_id")
+  user         User              @relation(fields: [userId], references: [id])
+  startTime    DateTime          @map("start_time")
+  endTime      DateTime          @map("end_time")
+  status       ReservationStatus @default(PENDING)
+  approvedById Int?              @map("approved_by")
+  approvedBy   User?             @relation("CarBookingApprover", fields: [approvedById], references: [id])
+  approvedAt   DateTime?         @map("approved_at")
+  createdAt    DateTime          @default(now()) @map("created_at")
+
+  @@index([carId, startTime, endTime])
+  @@map("car_bookings")
 }
 
 // ---------------- Events module ----------------
