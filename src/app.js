@@ -1,9 +1,11 @@
 import express from 'express';
 import cors from 'cors';
 import authRouter from './routes/auth.route.js';
-const app = express();
-
+import userRouter from './routes/users.route.js';
 import ticketsRoutes from './routes/tickets.route.js';
+import { pathNotFound } from './middlewares/pathNotFound.js';
+import { errorHandler } from './middlewares/errorHandler.js';
+const app = express();
 
 app.use(express.json());
 app.use(
@@ -21,11 +23,11 @@ app.get(`${API}/health`, (req, res) => {
 
 app.use(`${API}/auth`, authRouter);
 
-// app.use("/users");
+app.use(`${API}/users`, userRouter);
 
 // app.use("/reserves");
 
-app.use('/tickets', ticketsRoutes);
+app.use(`${API}/tickets`, ticketsRoutes);
 
 // app.use("/departments");
 
@@ -35,7 +37,7 @@ app.use('/tickets', ticketsRoutes);
 
 // app.use(validater); all route
 
-// app.use(pathNotFound);
-// app.use(errorHandler);
+app.use(pathNotFound);
+app.use(errorHandler);
 
 export default app;

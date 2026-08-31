@@ -5,6 +5,7 @@ const publicUserSelect = {
   id: true,
   firstname: true,
   lastname: true,
+  phone: true,
   email: true,
   role: true,
   departmentId: true,
@@ -26,6 +27,28 @@ export const createUser = async (userData) => {
 
 export const findPublicUserById = async (userId) => {
   return await prisma.user.findUnique({
+    where: { id: userId },
+    select: publicUserSelect,
+  });
+};
+
+export const findAllUsers = async () => {
+  return await prisma.user.findMany({
+    select: publicUserSelect,
+    orderBy: { id: "asc" },
+  });
+};
+
+export const updateUserById = async (userId, userFieldsToUpdate) => {
+  return await prisma.user.update({
+    where: { id: userId },
+    data: userFieldsToUpdate,
+    select: publicUserSelect,
+  });
+};
+
+export const deleteUserById = async (userId) => {
+  return await prisma.user.delete({
     where: { id: userId },
     select: publicUserSelect,
   });
