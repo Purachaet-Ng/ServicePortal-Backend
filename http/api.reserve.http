@@ -32,20 +32,19 @@ Content-Type: application/json
 
 // ROOMS
 ### GET reserve
-GET {{BASE_URL}}/reserves/rooms 
+GET {{BASE_URL}}/api/reserves/rooms 
 
 
 ### POST reserve
-POST {{BASE_URL}}/reserves/rooms  
+POST {{BASE_URL}}/api/reserves/rooms  
 Content-Type: application/json
 
 {
-   
     "email": "user@email.com",
     "roomId": 2,
     "startTime": "2026-09-01T09:00:00.000Z",
     "endTime": "2026-09-01T11:00:00.000Z",
-    "status" : ""
+    "status": "confirmed"
 }
 
 ### PATCH reserve

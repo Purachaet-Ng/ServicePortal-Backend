@@ -1,6 +1,7 @@
 import roomService from "../services/room.service.js"
 
-export const getRooms = async (req, res) => {
+export const 
+getRooms = async (req, res) => {
   try {
     const rooms = await roomService.getRooms();
 

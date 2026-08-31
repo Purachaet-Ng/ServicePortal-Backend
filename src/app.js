@@ -1,15 +1,12 @@
 import express from "express";
 import cors from "cors";
-<<<<<<< HEAD
 import reserveRoute from "./routes/reserve.route.js";
 
-=======
 import authRouter from "./routes/auth.route.js";
 import userRouter from "./routes/users.route.js";
 import ticketsRoutes from "./routes/tickets.route.js";
 import { pathNotFound } from "./middlewares/pathNotFound.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
->>>>>>> dev
 const app = express();
 
 
@@ -31,7 +28,7 @@ app.use(`${API}/auth`, authRouter);
 
 app.use(`${API}/users`, userRouter);
 
-app.use("/reserves", reserveRoute);
+app.use(`${API}/reserves`, reserveRoute);
 
 app.use(`${API}/tickets`, ticketsRoutes);
 
