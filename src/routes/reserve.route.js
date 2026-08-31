@@ -1,19 +1,19 @@
 import express from 'express'
 import {getCars, createCar, updateCar} from '../controllers/car.controller.js'
-import  {getRooms, createRoom, updateRoom } from '../controllers/room.controller.js'
+import  {getRooms, createBooking, updateBooking } from '../controllers/room.controller.js'
 
 
 const reserveRoute = express.Router()
 
 
 // Cars
-reserveRoute.use('/cars', getCars)
-reserveRoute.post('/cars', createCar)
-reserveRoute.patch('/carId', updateCar)
+// reserveRoute.use('/', getCars)
+// reserveRoute.post('/cars', createCar)
+// reserveRoute.patch('/carId', updateCar)
 
 // Rooms
-reserveRoute.use('/rooms', getRooms)
-reserveRoute.post('/rooms', createRoom)
-reserveRoute.patch('/roomId', updateRoom)
+reserveRoute.get('/rooms', getRooms)
+reserveRoute.post('/rooms', createBooking)
+reserveRoute.patch('/rooms/:bookingId', updateBooking)
 
 export default reserveRoute

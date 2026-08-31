@@ -1,43 +1,56 @@
 import roomService from "../services/room.service.js"
 
 export const getRooms = async (req, res) => {
-    try {
-        const rooms = await roomService.getRooms()
+  try {
+    const rooms = await roomService.getRooms();
 
-        res.status(200).json(rooms)
-    } catch (error) {
-        res.status(500).json({
-            message: error.message
-        })
-    }
-}
+    res.status(200).json({
+      success: true,
+      data: rooms,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
 
-export const createRoom = async (req, res) => {
-    try {
-        const room = await roomService.createRoom(req.body)
 
-        res.status(201).json(room)
-    } catch (error) {
-        res.status(500).json({
-            message: error.message
-        })
-    }
-}
+export const createBooking = async (req, res) => {
+  try {
+    const booking = await roomService.createBooking(req.body);
 
-export const updateRoom = async (req, res) => {
-    try {
-        const { roomId } = req.params
+    res.status(201).json({
+      success: true,
+      message: "สร้างการจองห้องสำเร็จ",
+      data: booking,
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
 
-        const room = await roomService.updateRoom(
-            roomId,
-            req.body
-        )
+export const updateBooking = async (req, res) => {
+  try {
+    const { bookingId } = req.params;
 
-        res.status(200).json(room)
-    } catch (error) {
-        res.status(500).json({
-            message: error.message
-        })
-    }
-}
+    const booking = await roomService.updateBooking(
+      Number(bookingId),
+      req.body
+    );
 
+    res.status(200).json({
+      success: true,
+      data: booking,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};

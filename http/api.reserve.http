@@ -1,0 +1,60 @@
+@BASE_URL = http://localhost:8000
+
+
+// Reserve
+// CARS
+### GET reserve
+GET {{BASE_URL}}/reserve/cars   
+
+### POST reserve
+POST {{BASE_URL}}/reserve/cars
+Content-Type: application/json
+
+{
+    "id": "id",
+    "name": "name",
+    "email": "email",
+    "roomId": "roomId",
+    "startTime": "DateTime",
+    "endTime": "DateTime"
+}
+
+### PATCH reserve
+PATCH  {{BASE_URL}}/reserve/carId
+Content-Type: application/json
+
+{
+     "roomId": "roomId",
+    "startTime": "DateTime",
+    "endTime": "DateTime"
+}
+
+
+// ROOMS
+### GET reserve
+GET {{BASE_URL}}/reserves/rooms 
+
+
+### POST reserve
+POST {{BASE_URL}}/reserves/rooms  
+Content-Type: application/json
+
+{
+   
+    "email": "user@email.com",
+    "roomId": 2,
+    "startTime": "2026-09-01T09:00:00.000Z",
+    "endTime": "2026-09-01T11:00:00.000Z",
+    "status" : ""
+}
+
+### PATCH reserve
+PATCH  {{BASE_URL}}/reserves/rooms/roomId
+Content-Type: application/json
+
+{
+    "id": 1,
+    "roomId": 2,
+    "startTime": "Dat2026-09-01T09:00:00.000ZeTime",
+    "endTime": "Dat2026-09-01T11:00:00.000ZeTime"
+}
