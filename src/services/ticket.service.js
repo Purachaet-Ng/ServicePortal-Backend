@@ -57,7 +57,7 @@ function roleCondition(user) {
 }
 
 export async function updateTicket(ticketId, data) {
-  const updated = prisma.ticket.update({
+  return prisma.ticket.update({
     where: { id: ticketId },
     data,
     include: {
@@ -72,6 +72,29 @@ export async function updateTicket(ticketId, data) {
       },
     },
   });
+}
 
-  return updated;
+export async function deleteTicket(ticketId) {
+  const ticket = await prisma.ticket.findUnique({
+    where: { id: ticketId },
+  });
+
+  if (!ticket) {
+    throw createHttpError(404, "Ticket not found");
+  }
+
+  return prisma.ticket.delete({
+    where: { id: ticketId },
+    include: {
+      requestType: {
+        select: { id: true, name: true, departmentId: true },
+      },
+      createdBy: {
+        select: { id: true, firstname: true, lastname: true },
+      },
+      assignedTo: {
+        select: { id: true, firstname: true, lastname: true },
+      },
+    },
+  });
 }

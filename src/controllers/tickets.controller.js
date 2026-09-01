@@ -3,6 +3,7 @@ import {
   readTicket,
   createTicket,
   updateTicket,
+  deleteTicket,
 } from "../services/ticket.service.js";
 
 export async function ticketCreate(req, res, next) {
@@ -27,25 +28,39 @@ export async function ticketDashboard(req, res, next) {
   }
 }
 
-export async function ticketUpdateStatus(req, res, next) {
+export async function ticketUpdate(req, res, next) {
   try {
-    const ticketId = Number(req.valid.params.id);
-    const { status } = req.valid.body;
+    const ticketId = req.valid.params.id;
+    const data = req.body;
+    console.log(ticketId);
 
-    const ticket = updateTicket(ticketId, { status });
-    return res.status(200).json({ ticket });
+    const ticket = await updateTicket(ticketId, data);
+    return res.status(200).json({ success: `pdated` });
   } catch (err) {
     next(err);
   }
 }
 
-export async function ticketUpdateAssign(req, res, next) {
-  try {
-    const ticketId = Number(req.valid.params.id);
-    const { assignedToId } = req.valid.body;
+// export async function ticketUpdateAssign(req, res, next) {
+//   try {
+//     const ticketId = Number(req.valid.params.id);
+//     const { assignedToId } = req.valid.body;
 
-    const ticket = updateTicket(ticketId, { assignedToId });
-    return res.status(200).json({ ticket });
+//     const ticket = updateTicket(ticketId, { assignedToId });
+//     return res
+//       .status(200)
+//       .json({ success: `Ticket ID: ${ticketId} assign to ${assignedToId}` });
+//   } catch (err) {
+//     next(err);
+//   }
+// }
+
+export async function ticketDelete(req, res, next) {
+  try {
+    const ticketId = req.valid.params.id;
+
+    const ticket = await deleteTicket(ticketId);
+    return res.status(200).json({ success: `Ticket ID: ${ticketId} deleted` });
   } catch (err) {
     next(err);
   }
