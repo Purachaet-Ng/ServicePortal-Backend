@@ -48,7 +48,7 @@ Content-Type: application/json
 }
 
 ### PATCH reserve
-PATCH  {{BASE_URL}}/reserves/rooms/roomId
+PATCH  {{BASE_URL}}/api/reserves/rooms/roomId
 Content-Type: application/json
 
 {
