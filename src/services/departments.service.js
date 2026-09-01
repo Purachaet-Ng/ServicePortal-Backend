@@ -32,3 +32,14 @@ export const createDepartment = async (departmentData) => {
     select: departmentSelect,
   });
 };
+
+export const updateDepartmentById = async (
+  departmentId,
+  departmentFieldsToUpdate,
+) => {
+  return await prisma.department.update({
+    where: { id: departmentId },
+    data: departmentFieldsToUpdate,
+    select: departmentSelect,
+  });
+};

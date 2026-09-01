@@ -7,6 +7,7 @@ import {
   listDepartments,
 } from "../controllers/departments.controller.js";
 
+
 const router = Router();
 
 router.use(authenticate);
@@ -28,6 +29,16 @@ router.get(
 //   authorize("ADMIN_SYSTEM"),
 //   validate({ body: createDepartmentSchema }),
 //   createDepartmentByAdmin,
+// );
+
+// เปิดใช้งาน route หลังจากเพิ่ม createDepartmentSchema
+// และ import authorize/updateDepartmentSchema ครบ
+
+// router.patch(
+//   "/:id",
+//   authorize("ADMIN_SYSTEM"),
+//   validate({ params: idParams, body: updateDepartmentSchema }),
+//   updateDepartment,
 // );
 
 
