@@ -4,6 +4,7 @@ import { validate } from "../middlewares/validate.js";
 import {
   createTicketSchema,
   updateTicketSchema,
+  updateTicketStatusSchema,
 } from "../validators/ticket.validator.js";
 import { idParams } from "../validators/common.validator.js";
 import {
@@ -23,9 +24,20 @@ router.post("/", validate({ body: createTicketSchema }), ticketCreate);
 
 router.patch(
   "/:id",
+  authorize("ADMIN_SYSTEM", "ADMIN_DEPT"),
   validate({
     params: idParams,
     body: updateTicketSchema,
+  }),
+  ticketUpdate,
+);
+
+router.patch(
+  "/:id/status",
+  authorize("STAFF"),
+  validate({
+    params: idParams,
+    body: updateTicketStatusSchema,
   }),
   ticketUpdate,
 );

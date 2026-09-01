@@ -32,28 +32,25 @@ export async function ticketUpdate(req, res, next) {
   try {
     const ticketId = req.valid.params.id;
     const data = req.valid.body;
-    const userRole = req.user.role;
 
-    const ticket = await updateTicket(ticketId, userRole, data);
-    return res.status(200).json({ success: `Udated`, user: user });
+    const ticket = await updateTicket(ticketId, data);
+    return res.status(200).json({ success: `Ticket ${ticketId} updated` });
   } catch (err) {
     next(err);
   }
 }
 
-// export async function ticketUpdateAssign(req, res, next) {
-//   try {
-//     const ticketId = Number(req.valid.params.id);
-//     const { assignedToId } = req.valid.body;
+export async function ticketStatusUpdate(req, res, next) {
+  try {
+    const ticketId = req.valid.params.id;
+    const data = req.valid.body;
 
-//     const ticket = updateTicket(ticketId, { assignedToId });
-//     return res
-//       .status(200)
-//       .json({ success: `Ticket ID: ${ticketId} assign to ${assignedToId}` });
-//   } catch (err) {
-//     next(err);
-//   }
-// }
+    const ticket = await updateFullTicket(ticketId, data);
+    return res.status(200).json({ success: `Ticket ${ticketId} updated` });
+  } catch (err) {
+    next(err);
+  }
+}
 
 export async function ticketDelete(req, res, next) {
   try {

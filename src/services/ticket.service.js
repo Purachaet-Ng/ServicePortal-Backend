@@ -56,16 +56,8 @@ function roleCondition(user) {
   }
 }
 
-export async function updateTicket(ticketId, userRole, data) {
-  const roleUpdateFull = ["ADMIN_SYSTEM", "ADMIN_DEPT"];
-
+export async function updateTicket(ticketId, data) {
   await checkTicket(ticketId);
-
-  if (roleUpdateFull.includes(userRole)) {
-    console.log(`Full update`, data);
-  } else {
-    console.log(userRole);
-  }
 
   return prisma.ticket.update({
     where: { id: ticketId },
