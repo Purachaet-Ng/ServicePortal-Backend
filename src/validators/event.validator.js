@@ -52,5 +52,5 @@ export const updateEventStatusSchema = z.object({
 });
 
 export const updateRsvpSchema = z.object({
-  rsvpStatus: z.enum(["ACCEPTED", "DECLINED"]),
+  rsvpStatus: z.enum(["ACCEPTED", "DECLINED", "ATTENDED", "ABSENT"]),
 });
