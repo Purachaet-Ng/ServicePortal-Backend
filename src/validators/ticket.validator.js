@@ -14,10 +14,11 @@ export const ticketSchema = z.object({
     "REJECTED",
   ]),
   priority: z.enum(["LOW", "MEDIUM", "HIGH", "URGENT"]).optional(),
+  assignedToId: positiveId("Invalid assiged user id").nullish(),
   customFields: z
     .record(z.string(), z.unknown())
     .refine((fields) => Object.keys(fields).length > 0, {
-      message: "At least one field is required",
+      message: "At least one custom field is required",
     }),
 });
 
@@ -27,7 +28,7 @@ export const updateTicketSchema = ticketSchema
   .omit({ requestTypeId: true })
   .partial()
   .refine((data) => Object.keys(data).length > 0, {
-    message: "At least one custom field is required",
+    message: "At least one field is required",
   });
 
 export const updateTicketStatusSchema = z.object({
