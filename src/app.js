@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import authRouter from "./routes/auth.route.js";
 import userRouter from "./routes/users.route.js";
+import ticketsRoutes from "./routes/tickets.route.js";
 import { pathNotFound } from "./middlewares/pathNotFound.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
 import departmentRouter from "./routes/departments.route.js";
@@ -28,7 +29,7 @@ app.use(`${API}/users`, userRouter);
 
 // app.use("/reserves");
 
-// app.use("/tickets");
+app.use(`${API}/tickets`, ticketsRoutes);
 
 app.use(`${API}/departments`, departmentRouter);
 
