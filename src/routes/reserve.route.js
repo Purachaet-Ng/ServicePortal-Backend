@@ -1,6 +1,6 @@
 import express from 'express'
 import {getCars, createCar, updateCar} from '../controllers/car.controller.js'
-import  {getRooms, createBooking, updateBooking } from '../controllers/room.controller.js'
+import  {getRooms, createBooking, updateBooking,createRoom } from '../controllers/room.controller.js'
 import { validate } from '../middlewares/validate.js'
 import { createBookingSchema } from '../validators/room.validator.js'
 import { authenticate } from '../middlewares/auth.middleware.js'
@@ -16,7 +16,7 @@ reserveRoute.use(authenticate)
 
 // Rooms
 reserveRoute.get('/rooms', getRooms)
-// reserveRoute.post('/rooms', )
+reserveRoute.post('/rooms', createRoom)
 reserveRoute.post('/rooms/bookings', validate({body:createBookingSchema }) ,createBooking)
 reserveRoute.patch('/rooms/:bookingId', updateBooking)
 

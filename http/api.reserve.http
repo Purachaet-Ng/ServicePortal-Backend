@@ -42,16 +42,16 @@ Content-Type: application/json
 GET {{BASE_URL}}/api/reserves/rooms 
 
 
-# ### POST room reserve
-# POST {{BASE_URL}}/api/reserves/rooms
-# Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6IkFETUlOX1NZU1RFTSIsImlhdCI6MTc4ODI0MzI4OCwiZXhwIjoxNzg4ODQ4MDg4fQ.36FEa1Qz2xb0y7zrEq3SyEjl6fqo80VDEi3njxdFhzg
-# Content-Type: application/json
+### POST room reserve
+POST {{BASE_URL}}/api/reserves/rooms
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6IkFETUlOX1NZU1RFTSIsImlhdCI6MTc4ODI0MzI4OCwiZXhwIjoxNzg4ODQ4MDg4fQ.36FEa1Qz2xb0y7zrEq3SyEjl6fqo80VDEi3njxdFhzg
+Content-Type: application/json
 
-# {
-#     "name": "Meeting Room A",
-#     "location": "Floor 2",
-#     "capacity": 10
-# }
+{
+    "name": "Meeting",
+    "location": "Floor 2",
+    "capacity": 10
+}
 
 ### POST bookings reserve
 POST {{BASE_URL}}/api/reserves/rooms/bookings  

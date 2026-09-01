@@ -1,5 +1,5 @@
 import createHttpError from "http-errors";
-import roomService, { addRoomBooking } from "../services/room.service.js"
+import roomService, { addRoomBooking, addRoom } from "../services/room.service.js"
 
 export const 
 getRooms = async (req, res) => {
@@ -18,21 +18,21 @@ getRooms = async (req, res) => {
   }
 };
 
-// export  const createRoom = async (req, res, next) => {
-//     try {
-//         const {id} = req.user
-//         const {data} = req.valid.body;
-//         const room = await addRoom(data, id)
+export  const createRoom = async (req, res, next) => {
+    try {
+    // const body = req.valid ? req.valid.body : req.body;
+    const { name, location, capacity } = req.body;
+    const room = await addRoom({ name, location, capacity });
 
-//         res.status(201).json({
-//       success: true,
-//       message: "Room reservation successfully created.",
-//       data: room,
-//     });
-//   } catch (error) {
-//     next(error)
-//     }
-// }
+        res.status(201).json({
+      success: true,
+      message: "Room reservation successfully created.",
+      data: room,
+    });
+  } catch (error) {
+    next(error)
+    }
+}
 
 export const createBooking = async (req, res,next) => {
   try {

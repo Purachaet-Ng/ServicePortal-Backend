@@ -8,18 +8,18 @@ export const getRooms = async () => {
     return rooms;
 };
 
-// export const createRoom = async (data) => {
-//     const { name, location, parsedcapacity } = data;
+export const addRoom = async (data) => {
+    const { name, location, capacity } = data;
 
-//     const room = await prisma.room.create({
-//         data: {
-//             name: name,
-//             location: location || null,
-//             capacity: parsedcapacity,
-//         },
-//     });
-//     return room
-// }
+    const room = await prisma.room.create({
+        data: {
+            name: name,
+            location: location || null,
+            capacity: Number(capacity),
+        },
+    });
+    return room
+}
 // export const addRoom = async (data) => {
 //     return await createRoom(data)
 // };
@@ -89,7 +89,7 @@ return booking;
 
 export default {
     getRooms,
-    
+    addRoom,
     createBooking,
     updateBooking
 }
