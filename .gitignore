@@ -1,10 +1,6 @@
 # Dependencies
 node_modules/
 
-<<<<<<< HEAD
-/generated/prisma
-/http
-=======
 # Environment variables
 .env
 .env.*
@@ -25,5 +21,6 @@ Thumbs.db
 
 05-คู่มือลงมือทั้งระบบ-ทีละก้อน.md
 
+03-คู่มือ-Departments-CRUD.md
+
 01-คู่มือ-Auth-เริ่มจาก-app-use-auth.md
->>>>>>> origin
