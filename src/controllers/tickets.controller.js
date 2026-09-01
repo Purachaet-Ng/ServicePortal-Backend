@@ -31,11 +31,11 @@ export async function ticketDashboard(req, res, next) {
 export async function ticketUpdate(req, res, next) {
   try {
     const ticketId = req.valid.params.id;
-    const data = req.body;
-    console.log(ticketId);
+    const data = req.valid.body;
+    const userRole = req.user.role;
 
-    const ticket = await updateTicket(ticketId, data);
-    return res.status(200).json({ success: `pdated` });
+    const ticket = await updateTicket(ticketId, userRole, data);
+    return res.status(200).json({ success: `Udated`, user: user });
   } catch (err) {
     next(err);
   }

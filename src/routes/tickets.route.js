@@ -3,7 +3,7 @@ import { authenticate, authorize } from "../middlewares/auth.middleware.js";
 import { validate } from "../middlewares/validate.js";
 import {
   createTicketSchema,
-  updateTicketStatusSchema,
+  updateTicketSchema,
 } from "../validators/ticket.validator.js";
 import { idParams } from "../validators/common.validator.js";
 import {
@@ -21,7 +21,14 @@ router.get("/", ticketDashboard);
 
 router.post("/", validate({ body: createTicketSchema }), ticketCreate);
 
-router.patch("/:id", validate({ params: idParams }), ticketUpdate);
+router.patch(
+  "/:id",
+  validate({
+    params: idParams,
+    body: updateTicketSchema,
+  }),
+  ticketUpdate,
+);
 
 router.delete(
   "/:id",
