@@ -84,8 +84,18 @@ export async function login(req, res, next) {
   }
 }
 
-export function getMe(req, res) {
-  return res.status(200).json({
-    user: req.user,
-  });
+export async function getMe(req, res, next) {
+  try {
+    const user = await findPublicUserById(req.user.id);
+
+    if (!user) {
+      throw createHttpError(404, "User not found");
+    }
+
+    return res.status(200).json({
+      user,
+    });
+  } catch (error) {
+    next(error);
+  }
 }
