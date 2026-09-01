@@ -12,3 +12,6 @@ export const requiredText = (field) =>
     .string({ error: `${field} is required` })
     .trim()
     .min(1, `${field} must not be empty`);
+
+export const requiredDate = (field) =>
+  requiredText(field).pipe(z.coerce.date({ error: `Invalid ${field}` }));

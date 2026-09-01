@@ -6,3 +6,7 @@ export const createCommentSchema = z.object({
   entityId: positiveId("Invalid entity id"),
   text: requiredText("text"),
 });
+
+export const updateCommentSchema = createCommentSchema.pick({
+  text: true,
+});
