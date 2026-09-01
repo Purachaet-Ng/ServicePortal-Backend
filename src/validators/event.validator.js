@@ -1,17 +1,44 @@
 import z from "zod";
-import { requiredText } from "./common.validator.js";
+import { requiredDate, requiredText } from "./common.validator.js";
 
-export const createEventSchema = z
-  .object({
-    title: requiredText("title"),
-    description: z.string().trim().nullish(),
-    startTime: z.coerce.date({ error: "Invalid start time" }),
-    endTime: z.coerce.date({ error: "Invalid end time" }),
-  })
-  .refine((data) => data.endTime > data.startTime, {
+export const eventSchema = z.object({
+  title: requiredText("title"),
+  description: z.string().trim().nullish(),
+  status: z.enum([
+    "PENDING",
+    "APPROVE",
+    "IN_PROGRESS",
+    "LIVE",
+    "CLOSED",
+    "CANCEL",
+  ]),
+  startTime: requiredDate("startTime"),
+  endTime: requiredDate("endTime"),
+});
+
+export const createEventSchema = eventSchema.refine(
+  (data) => data.endTime > data.startTime,
+  {
     message: "endTime must be after startTime",
     path: ["endTime"],
-  });
+  },
+);
+
+export const updateEventSchema = eventSchema
+  .partial()
+  .refine((data) => Object.keys(data).length > 0, {
+    message: "At least one field is required",
+  })
+  .refine(
+    (data) =>
+      data.startTime === undefined ||
+      data.endTime === undefined ||
+      data.endTime > data.startTime,
+    {
+      message: "endTime must be after startTime",
+      path: ["endTime"],
+    },
+  );
 
 export const updateEventStatusSchema = z.object({
   status: z.enum([
@@ -25,5 +52,5 @@ export const updateEventStatusSchema = z.object({
 });
 
 export const updateRsvpSchema = z.object({
-  rsvpStatus: z.enum(["invited", "accepted", "declined"]),
+  rsvpStatus: z.enum(["ACCEPTED", "DECLINED"]),
 });
