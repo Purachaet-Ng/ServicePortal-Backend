@@ -18,3 +18,17 @@ export const findDepartmentById = async (departmentId) => {
     select: departmentSelect,
   });
 };
+
+export const findDepartmentByName = async (departmentName) => {
+  return await prisma.department.findUnique({
+    where: { name: departmentName },
+    select: departmentSelect,
+  });
+};
+
+export const createDepartment = async (departmentData) => {
+  return await prisma.department.create({
+    data: departmentData,
+    select: departmentSelect,
+  });
+};

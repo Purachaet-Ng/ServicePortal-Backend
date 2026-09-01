@@ -3,7 +3,7 @@ import { authenticate } from "../middlewares/auth.middleware.js";
 import { validate } from "../middlewares/validate.js";
 import { idParams } from "../validators/common.validator.js";
 import {
-    getDepartment,
+  getDepartment,
   listDepartments,
 } from "../controllers/departments.controller.js";
 
@@ -18,5 +18,19 @@ router.get(
   validate({ params: idParams }),
   getDepartment,
 );
+
+
+// เปิดใช้งาน route หลังจากเพิ่ม createDepartmentSchema
+// และ import authorize/createDepartmentByAdmin ครบ
+
+// router.post(
+//   "/",
+//   authorize("ADMIN_SYSTEM"),
+//   validate({ body: createDepartmentSchema }),
+//   createDepartmentByAdmin,
+// );
+
+
+
 
 export default router;
