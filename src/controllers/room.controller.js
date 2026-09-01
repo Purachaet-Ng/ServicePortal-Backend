@@ -1,4 +1,5 @@
-import roomService from "../services/room.service.js"
+import createHttpError from "http-errors";
+import roomService, { addRoomBooking } from "../services/room.service.js"
 
 export const 
 getRooms = async (req, res) => {
@@ -17,21 +18,36 @@ getRooms = async (req, res) => {
   }
 };
 
+// export  const createRoom = async (req, res, next) => {
+//     try {
+//         const {id} = req.user
+//         const {data} = req.valid.body;
+//         const room = await addRoom(data, id)
 
-export const createBooking = async (req, res) => {
+//         res.status(201).json({
+//       success: true,
+//       message: "Room reservation successfully created.",
+//       data: room,
+//     });
+//   } catch (error) {
+//     next(error)
+//     }
+// }
+
+export const createBooking = async (req, res,next) => {
   try {
-    const booking = await roomService.createBooking(req.body);
+    const {id} = req.user
+    const data = req.valid.body;
+    // console.log('data', data)
+    const booking = await addRoomBooking(data, id)
 
     res.status(201).json({
       success: true,
-      message: "สร้างการจองห้องสำเร็จ",
+      message: "Booking reservation successfully created.",
       data: booking,
     });
   } catch (error) {
-    res.status(400).json({
-      success: false,
-      message: error.message,
-    });
+    next(error)
   }
 };
 

@@ -8,56 +8,27 @@ export const getRooms = async () => {
     return rooms;
 };
 
-// หา user หรือสร้างใหม่
+// export const createRoom = async (data) => {
+//     const { name, location, parsedcapacity } = data;
+
+//     const room = await prisma.room.create({
+//         data: {
+//             name: name,
+//             location: location || null,
+//             capacity: parsedcapacity,
+//         },
+//     });
+//     return room
+// }
+// export const addRoom = async (data) => {
+//     return await createRoom(data)
+// };
+
+
+
 export const createBooking = async (data) => {
-  const { email, roomId, startTime, endTime, status } = data;
+  const { status } = data;
 
-  // 1. ตรวจสอบข้อมูลบังคับ
-  if (!email || !roomId || !startTime || !endTime) {
-    throw new Error("กรุณาระบุ email, roomId, startTime และ endTime ให้ครบถ้วน");
-  }
-
-  const parsedRoomId = parseInt(roomId, 10);
-  const start = new Date(startTime);
-  const end = new Date(endTime);
-
-  if (isNaN(parsedRoomId)) {
-    throw new Error("roomId ต้องเป็นตัวเลขเท่านั้น");
-  }
-
-  if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-    throw new Error("startTime และ endTime ต้องเป็นรูปแบบวันที่ที่ถูกต้อง");
-  }
-
-  if (start >= end) {
-    throw new Error("เวลาเริ่มต้น (startTime) ต้องเกิดขึ้นก่อนเวลาสิ้นสุด (endTime)");
-  }
-
-  // 2. ค้นหา User จาก Email หรือสร้างใหม่หากยังไม่มีในระบบ
-  let user = await prisma.user.findUnique({
-    where: { email },
-  select: {
-      id: true,
-      email: true,
-      role: true,
-    },
-  });
-
-  if (!user) {
-    user = await prisma.user.create({
-      data: {
-        email: email,
-        passwordHash: "$2b$10$defaultDummyPasswordHashValue",
-        role: "EMPLOYEE",
-      },
-      select: {
-        id: true,
-        email: true,
-      },
-    });
-  }
-
-  // 3. บันทึกข้อมูลการจองห้อง
   const booking = await prisma.roomBooking.create({
     data: {
       roomId: parsedRoomId,
@@ -66,17 +37,34 @@ export const createBooking = async (data) => {
       endTime: end,
       status: status && status.trim() !== "" ? status : "confirmed",
     },
-   
+   data
   });
-
   return booking;
 };
 
+export const addRoomBooking = async (data,id) => {
+    return await prisma.roomBooking.create({
+    data:{
+        startTime: data.startTime,
+        endTime:data.endTime,
+        room:{
+            connect:{
+                id:data.roomId
+            }
+        },
+        user:{
+            connect:{
+                id
+            }
+        }
+    }  
+  });
+}
 // แก้ไขการจอง
 export const updateBooking = async (id, data) => {
   const bookingId = Number(id);
   if (isNaN(bookingId)) {
-    throw new Error("ID ของการจองต้องเป็นตัวเลขเท่านั้น");
+    throw new Error("The booking code must be numbers only.");
   }
 
   // เตรียม object สำหรับ update
@@ -101,6 +89,7 @@ return booking;
 
 export default {
     getRooms,
+    
     createBooking,
     updateBooking
 }
