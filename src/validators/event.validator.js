@@ -11,7 +11,8 @@ export const eventSchema = z.object({
     "LIVE",
     "CLOSED",
     "CANCEL",
-  ]),
+  ])
+  .optional(),
   startTime: requiredDate("startTime"),
   endTime: requiredDate("endTime"),
 });
