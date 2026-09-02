@@ -12,6 +12,7 @@ import {
   ticketUpdate,
   ticketCreate,
   ticketDelete,
+  getTicket,
 } from "../controllers/tickets.controller.js";
 
 const router = express.Router();
@@ -19,6 +20,8 @@ const router = express.Router();
 router.use(authenticate);
 
 router.get("/", ticketDashboard);
+
+router.get("/:id", validate({ params: idParams }), getTicket);
 
 router.post("/", validate({ body: createTicketSchema }), ticketCreate);
 

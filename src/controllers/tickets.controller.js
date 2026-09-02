@@ -83,3 +83,15 @@ export async function ticketDelete(req, res, next) {
     next(err);
   }
 }
+
+export async function getTicket(req,res,next) {
+  try {
+    const {id} =req.valid.params
+    const data = await findTicketById(id)
+
+    res.status(200).json({data})
+  } catch (error) {
+    next(error)
+  }
+  
+}
