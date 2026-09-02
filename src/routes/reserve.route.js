@@ -16,7 +16,7 @@ reserveRoute.use(authenticate)
 
 // Rooms
 reserveRoute.get('/rooms', getRooms)
-reserveRoute.post('/rooms', createRoom)
+reserveRoute.post('/rooms',validate({body:createRoomSchema}) ,createRoom)
 reserveRoute.post('/rooms/bookings', validate({body:createBookingSchema }) ,createBooking)
 reserveRoute.patch('/rooms/:bookingId', updateBooking)
 

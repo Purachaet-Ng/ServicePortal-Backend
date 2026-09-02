@@ -48,9 +48,9 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6I
 Content-Type: application/json
 
 {
-    "name": "Meeting",
-    "location": "Floor 2",
-    "capacity": 10
+    "name": "Meeting1",
+    "location": "Floor 21",
+    "capacity": 101
 }
 
 ### POST bookings reserve

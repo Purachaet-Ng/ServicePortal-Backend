@@ -9,15 +9,9 @@ export const getRooms = async () => {
 };
 
 export const addRoom = async (data) => {
-    const { name, location, capacity } = data;
+    // const { name, location, capacity } = data;
 
-    const room = await prisma.room.create({
-        data: {
-            name: name,
-            location: location || null,
-            capacity: Number(capacity),
-        },
-    });
+    const room = await prisma.room.create({data});
     return room
 }
 // export const addRoom = async (data) => {
@@ -26,21 +20,21 @@ export const addRoom = async (data) => {
 
 
 
-export const createBooking = async (data) => {
-  const { status } = data;
+// export const createBooking = async (data) => {
+//   const { status } = data;
 
-  const booking = await prisma.roomBooking.create({
-    data: {
-      roomId: parsedRoomId,
-      userId: user.id,
-      startTime: start,
-      endTime: end,
-      status: status && status.trim() !== "" ? status : "confirmed",
-    },
-   data
-  });
-  return booking;
-};
+//   const booking = await prisma.roomBooking.create({
+//     data: {
+//       roomId: parsedRoomId,
+//       userId: user.id,
+//       startTime: start,
+//       endTime: end,
+//       status: status && status.trim() !== "" ? status : "confirmed",
+//     },
+//    data
+//   });
+//   return booking;
+// };
 
 export const addRoomBooking = async (data,id) => {
     return await prisma.roomBooking.create({
@@ -90,6 +84,6 @@ return booking;
 export default {
     getRooms,
     addRoom,
-    createBooking,
+    // createBooking,
     updateBooking
 }

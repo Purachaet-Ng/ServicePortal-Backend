@@ -20,9 +20,10 @@ getRooms = async (req, res) => {
 
 export  const createRoom = async (req, res, next) => {
     try {
-    // const body = req.valid ? req.valid.body : req.body;
-    const { name, location, capacity } = req.body;
-    const room = await addRoom({ name, location, capacity });
+    const body = req.valid ? req.valid.body : req.body;
+    // console.log('body', body)
+    // const { name, location, capacity } = req.body;
+    const room = await addRoom(body);
 
         res.status(201).json({
       success: true,
