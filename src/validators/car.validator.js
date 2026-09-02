@@ -20,6 +20,7 @@ export const updateCarSchema = carSchema
 // Car booking
 export const carBookingSchema = z.object({
   carId: positiveId("Invalid car id"),
+  status: z.enum(["PENDING", "APPROVED", "REJECTED", "CANCELLED"]),
   startTime: requiredDate("startTime"),
   endTime: requiredDate("endTime"),
 });
