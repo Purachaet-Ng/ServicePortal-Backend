@@ -10,3 +10,20 @@ export async function findRequestTypesByDepartment(departmentId) {
     orderBy: { name: "asc" },
   });
 }
+
+export async function getAllRequestType() {
+  return prisma.requestType.findMany({
+    include: {
+      department: { select: { id: true, name: true } },
+    },
+  });
+}
+
+export async function createRequestType(requestTypeData) {
+  return prisma.requestType.create({
+    data: requestTypeData,
+    include: {
+      department: { select: { id: true, name: true } },
+    },
+  });
+}
