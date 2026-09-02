@@ -1,0 +1,88 @@
+@BASE_URL = http://localhost:8000
+
+# LOGIN 
+POST {{BASE_URL}}/api/auth/login
+Content-Type: application/json
+
+{
+ "email":"purachaet@company.com",
+ "password":"password123"
+}
+// Reserve
+// CARS
+# ### GET reserve
+# GET {{BASE_URL}}/reserve/cars   
+
+# ### POST reserve
+# POST {{BASE_URL}}/reserve/cars
+# Content-Type: application/json
+
+# {
+#     "id": "id",
+#     "name": "name",
+#     "email": "email",
+#     "roomId": "roomId",
+#     "startTime": "DateTime",
+#     "endTime": "DateTime"
+# }
+
+# ### PATCH reserve
+# PATCH  {{BASE_URL}}/reserve/carId
+# Content-Type: application/json
+
+# {
+#      "roomId": "roomId",
+#     "startTime": "DateTime",
+#     "endTime": "DateTime"
+# }
+
+
+// ROOMS
+### GET reserve
+GET {{BASE_URL}}/api/reserves/rooms 
+
+
+### POST room reserve
+POST {{BASE_URL}}/api/reserves/rooms
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6IkFETUlOX1NZU1RFTSIsImlhdCI6MTc4ODI0MzI4OCwiZXhwIjoxNzg4ODQ4MDg4fQ.36FEa1Qz2xb0y7zrEq3SyEjl6fqo80VDEi3njxdFhzg
+Content-Type: application/json
+
+{
+    "name": "Meeting1",
+    "location": "Floor 21",
+    "capacity": 101
+}
+
+### POST bookings reserve
+POST {{BASE_URL}}/api/reserves/rooms/bookings  
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6IkFETUlOX1NZU1RFTSIsImlhdCI6MTc4ODI0MzI4OCwiZXhwIjoxNzg4ODQ4MDg4fQ.36FEa1Qz2xb0y7zrEq3SyEjl6fqo80VDEi3njxdFhzg
+Content-Type: application/json
+
+{
+    "roomId": 2,
+    "startTime": "2026-10-01T09:00:00.000Z",
+    "endTime": "2026-10-01T11:00:00.000Z",
+    "status": "confirmed"
+}
+
+
+### PATCH reserve booking
+PATCH  {{BASE_URL}}/api/reserves/rooms/1
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6IkFETUlOX1NZU1RFTSIsImlhdCI6MTc4ODI0MzI4OCwiZXhwIjoxNzg4ODQ4MDg4fQ.36FEa1Qz2xb0y7zrEq3SyEjl6fqo80VDEi3njxdFhzg
+Content-Type: application/json
+
+{
+   "name": "Meeting2",
+    "location": "Floor 28",
+    "capacity": 198
+}
+### PATCH reserve booking
+PATCH  {{BASE_URL}}/api/reserves/rooms/bookings/1
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6IkFETUlOX1NZU1RFTSIsImlhdCI6MTc4ODI0MzI4OCwiZXhwIjoxNzg4ODQ4MDg4fQ.36FEa1Qz2xb0y7zrEq3SyEjl6fqo80VDEi3njxdFhzg
+Content-Type: application/json
+
+{
+    "startTime": "2026-09-12T10:00:00.000Z",
+    "endTime": "2026-10-12T10:00:00.000Z"
+    # "status": "CANCELLED"
+}

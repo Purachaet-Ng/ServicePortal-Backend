@@ -5,16 +5,18 @@ export const ticketSchema = z.object({
   requestTypeId: positiveId("Invalid request type id"),
   title: requiredText("title"),
   description: z.string().trim().nullish(),
-  status: z.enum([
-    "SUBMITTED",
-    "UNDER_REVIEW",
-    "IN_PROGRESS",
-    "RESOLVED",
-    "CLOSED",
-    "REJECTED",
-  ]),
+  status: z
+    .enum([
+      "SUBMITTED",
+      "UNDER_REVIEW",
+      "IN_PROGRESS",
+      "RESOLVED",
+      "CLOSED",
+      "REJECTED",
+    ])
+    .optional(),
   priority: z.enum(["LOW", "MEDIUM", "HIGH", "URGENT"]).optional(),
-  assignedToId: positiveId("Invalid assiged user id").nullish(),
+  assignedToId: positiveId("Invalid assigned user id").nullish(),
   customFields: z
     .record(z.string(), z.unknown())
     .refine((fields) => Object.keys(fields).length > 0, {
@@ -22,7 +24,10 @@ export const ticketSchema = z.object({
     }),
 });
 
-export const createTicketSchema = ticketSchema;
+export const createTicketSchema = ticketSchema.omit({
+  status: true,
+  assignedToId: true,
+});
 
 export const updateTicketSchema = ticketSchema
   .omit({ requestTypeId: true })
