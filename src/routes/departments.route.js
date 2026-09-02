@@ -6,7 +6,10 @@ import {
   getDepartment,
   listDepartments,
   deleteDepartment,
+  createDepartmentByAdmin,
+  updateDepartment,
 } from "../controllers/departments.controller.js";
+import { departmentSchema } from "../validators/department.validator.js";
 
 
 const router = Router();
@@ -25,22 +28,22 @@ router.get(
 // เปิดใช้งาน route หลังจากเพิ่ม createDepartmentSchema
 // และ import authorize/createDepartmentByAdmin ครบ
 
-// router.post(
-//   "/",
-//   authorize("ADMIN_SYSTEM"),
-//   validate({ body: createDepartmentSchema }),
-//   createDepartmentByAdmin,
-// );
+router.post(
+  "/",
+  authorize("ADMIN_SYSTEM"),
+  validate({ body: departmentSchema }),
+  createDepartmentByAdmin,
+);
 
 // เปิดใช้งาน route หลังจากเพิ่ม createDepartmentSchema
 // และ import authorize/updateDepartmentSchema ครบ
 
-// router.patch(
-//   "/:id",
-//   authorize("ADMIN_SYSTEM"),
-//   validate({ params: idParams, body: updateDepartmentSchema }),
-//   updateDepartment,
-// );
+router.patch(
+  "/:id",
+  authorize("ADMIN_SYSTEM"),
+  validate({ params: idParams, body: departmentSchema }),
+  updateDepartment,
+);
 
 router.delete(
   "/:id",
