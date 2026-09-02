@@ -19,6 +19,7 @@ export const updateRoomSchema = roomSchema
 //Room Booking
 export const roomBookingSchema = z.object({
   roomId: positiveId("Invalid room id"),
+  status: z.enum(["PENDING", "APPROVED", "REJECTED", "CANCELLED"]),
   startTime: requiredDate("startTime"),
   endTime: requiredDate("endTime"),
 });
