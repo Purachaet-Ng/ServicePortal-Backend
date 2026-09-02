@@ -49,7 +49,7 @@ function roleCondition(user) {
       };
     case "STAFF":
       return {
-        assignedToId: user.id,
+        OR: [{ createdById: user.id }, { assignedToId: user.id }],
       };
     default:
       throw createHttpError(403, "Forbidden");
