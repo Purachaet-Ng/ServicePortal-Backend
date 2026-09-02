@@ -37,7 +37,15 @@ export const addRoomBooking = async (data,id) => {
 
 
 // แก้ไขการจอง
-export const editBooking = async (data,bookingId) => {
+export const editRoom = async (data, roomId) => {
+  return await prisma.room.update({
+    where:{id:roomId},
+    data
+})
+}
+
+
+export const editBooking = async (data, bookingId) => {
   return await prisma.roomBooking.update({
     where:{id:bookingId},
     data
@@ -47,5 +55,6 @@ export default {
     getRooms,
     addRoom,
     // createBooking,
+    editRoom,
     editBooking
 }

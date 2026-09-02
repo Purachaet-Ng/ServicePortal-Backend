@@ -65,7 +65,18 @@ Content-Type: application/json
     "status": "confirmed"
 }
 
-### PATCH reserve
+
+### PATCH reserve booking
+PATCH  {{BASE_URL}}/api/reserves/rooms/1
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6IkFETUlOX1NZU1RFTSIsImlhdCI6MTc4ODI0MzI4OCwiZXhwIjoxNzg4ODQ4MDg4fQ.36FEa1Qz2xb0y7zrEq3SyEjl6fqo80VDEi3njxdFhzg
+Content-Type: application/json
+
+{
+   "name": "Meeting2",
+    "location": "Floor 28",
+    "capacity": 198
+}
+### PATCH reserve booking
 PATCH  {{BASE_URL}}/api/reserves/rooms/bookings/1
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6IkFETUlOX1NZU1RFTSIsImlhdCI6MTc4ODI0MzI4OCwiZXhwIjoxNzg4ODQ4MDg4fQ.36FEa1Qz2xb0y7zrEq3SyEjl6fqo80VDEi3njxdFhzg
 Content-Type: application/json
