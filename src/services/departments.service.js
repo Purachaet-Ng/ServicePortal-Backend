@@ -43,3 +43,27 @@ export const updateDepartmentById = async (
     select: departmentSelect,
   });
 };
+
+export const findDepartmentUsageById = async (departmentId) => {
+  return await prisma.department.findUnique({
+    where: { id: departmentId },
+    select: {
+      id: true,
+      name: true,
+      _count: {
+        select: {
+          users: true,
+          requestTypes: true,
+        },
+      },
+    },
+  });
+};
+
+export const deleteDepartmentById = async (departmentId) => {
+  return await prisma.department.delete({
+    where: { id: departmentId },
+    select: departmentSelect,
+  });
+};
+
