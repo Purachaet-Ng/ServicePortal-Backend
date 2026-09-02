@@ -106,3 +106,16 @@ async function checkTicket(ticketId) {
 
   return ticket;
 }
+
+export async function findTicketById(ticketId) {
+  const ticket = await prisma.ticket.findUnique({
+    where: { id: ticketId },
+    include:{requestType: true}
+  });
+
+  if (!ticket) {
+    throw createHttpError(404, "Ticket not found");
+  }
+
+  return ticket;
+}
