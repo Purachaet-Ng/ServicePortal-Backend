@@ -16,14 +16,14 @@ export const updateRoomSchema = roomSchema
     message: "At least one field is required",
   });
 
-//Booking
-export const bookingSchema = z.object({
+//Room Booking
+export const roomBookingSchema = z.object({
   roomId: positiveId("Invalid room id"),
   startTime: requiredDate("startTime"),
   endTime: requiredDate("endTime"),
 });
 
-export const createBookingSchema = bookingSchema.refine(
+export const createRoomBookingSchema = roomBookingSchema.refine(
   (data) => data.endTime > data.startTime,
   {
     message: "endTime must be after startTime",
@@ -31,7 +31,7 @@ export const createBookingSchema = bookingSchema.refine(
   },
 );
 
-export const updateBookingSchema = bookingSchema
+export const updateRoomBookingSchema = roomBookingSchema
   .partial()
   .refine((data) => Object.keys(data).length > 0, {
     message: "At least one field is required",
@@ -47,6 +47,6 @@ export const updateBookingSchema = bookingSchema
     },
   );
 
-export const updateBookingStatusSchema = z.object({
+export const updateRoomBookingStatusSchema = z.object({
   status: z.enum(["PENDING", "APPROVED", "REJECTED", "CANCELLED"]),
 });
