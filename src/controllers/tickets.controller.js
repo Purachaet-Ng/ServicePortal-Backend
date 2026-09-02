@@ -1,27 +1,64 @@
-import { readTicket, createTicket } from "../services/ticket.service.js";
+import createHttpError from "http-errors";
+import {
+  readTicket,
+  createTicket,
+  updateTicket,
+  deleteTicket,
+} from "../services/ticket.service.js";
 
 export async function ticketCreate(req, res, next) {
   try {
-    const ticket = await createTicket(req.body);
-    return res.status(201).json({ message: ticket });
+    const TicketRequestData = await createTicket({
+      ...req.valid.body,
+      createdById: req.user.id,
+    });
+    return res.status(201).json({ TicketRequestData });
   } catch (err) {
     next(err);
   }
 }
 
 export async function ticketDashboard(req, res, next) {
-  const user = {
-    id: Number(req.query.userId),
-    role: req.query.role,
-    departmentId: req.query.departmentId
-      ? Number(req.query.departmentId)
-      : null,
-  };
+  try {
+    const tickets = await readTicket(req.user);
 
-  const ticket = await readTicket(user);
-  res.json({ ticket });
+    return res.status(200).json({ tickets });
+  } catch (err) {
+    next(err);
+  }
 }
 
-export async function ticketById(req, res) {
-  return await res.status(200).json({ message: `Get ticket by id` });
+export async function ticketUpdate(req, res, next) {
+  try {
+    const ticketId = req.valid.params.id;
+    const data = req.valid.body;
+
+    const ticket = await updateTicket(ticketId, data);
+    return res.status(200).json({ success: `Ticket ${ticketId} updated` });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function ticketStatusUpdate(req, res, next) {
+  try {
+    const ticketId = req.valid.params.id;
+    const data = req.valid.body;
+
+    const ticket = await updateFullTicket(ticketId, data);
+    return res.status(200).json({ success: `Ticket ${ticketId} updated` });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function ticketDelete(req, res, next) {
+  try {
+    const ticketId = req.valid.params.id;
+
+    const ticket = await deleteTicket(ticketId);
+    return res.status(200).json({ success: `Ticket ID: ${ticketId} deleted` });
+  } catch (err) {
+    next(err);
+  }
 }
