@@ -122,3 +122,58 @@ export const notifyTicketUpdated = async ({ before, after, actorId }) => {
     console.error("[notifications] ticket fan-out failed", error);
   }
 };
+
+/**
+ * Fan-out for POST /tickets.
+ *
+ * API.md's trigger list does not name creation, but the seed's own demo rows
+ * do \u2014 "Somchai Prasert submitted a new ticket", written to an ADMIN_DEPT \u2014
+ * and the dashboard's "Awaiting triage" card only means something if somebody
+ * is told the queue grew. Nobody triages a queue they do not know about.
+ *
+ * Recipients are that department's admins. The department comes from
+ * requestType.departmentId, since the client never sends department_id
+ * (API.md \u00a7Tickets). ADMIN_SYSTEM is deliberately excluded \u2014 it would collect
+ * every ticket in the organisation.
+ *
+ * Never throws, for the reason given on notifyTicketUpdated.
+ */
+export const notifyTicketCreated = async ({ ticket, departmentId, actor }) => {
+  try {
+    const admins = await prisma.user.findMany({
+      where: { role: "ADMIN_DEPT", departmentId },
+      select: { id: true },
+    });
+
+    const submitter = `${actor.firstname} ${actor.lastname}`.trim() || "Someone";
+    // The seed distinguishes these two, so keep the wording it established.
+    const urgency = ticket.priority === "URGENT" ? "an urgent" : "a new";
+
+    const messages = new Map(
+      admins.map(({ id }) => [
+        id,
+        `${submitter} submitted ${urgency} ticket ${quoteTitle(ticket.title)}`,
+      ]),
+    );
+
+    // The request type's default assignee, once createTicket() stops dropping
+    // it on the floor (doc/API.md G08). Until then this never fires.
+    if (ticket.assignedToId) {
+      messages.set(
+        ticket.assignedToId,
+        `Ticket ${quoteTitle(ticket.title)} was assigned to you`,
+      );
+    }
+
+    // The person who raised it does not need telling they raised it.
+    messages.delete(actor.id);
+
+    if (messages.size === 0) return;
+
+    await prisma.notification.createMany({
+      data: [...messages].map(([userId, message]) => ({ userId, message })),
+    });
+  } catch (error) {
+    console.error("[notifications] ticket create fan-out failed", error);
+  }
+};

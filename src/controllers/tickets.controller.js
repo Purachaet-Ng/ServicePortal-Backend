@@ -8,7 +8,10 @@ import {
 } from "../services/ticket.service.js";
 import { findRequestTypeById } from "../services/requestType.service.js";
 import { validateCustomFields } from "../utils/schemaValidator.js";
-import { notifyTicketUpdated } from "../services/notifications.service.js";
+import {
+  notifyTicketCreated,
+  notifyTicketUpdated,
+} from "../services/notifications.service.js";
 
 export async function ticketCreate(req, res, next) {
   try {
@@ -25,6 +28,15 @@ export async function ticketCreate(req, res, next) {
       assignedToId: rest.assignedToId ?? requestType.defaultAssigneeId,
       createdById: req.user.id,
     });
+
+    // After the create, and it swallows its own errors — a failed
+    // notification must not turn a created ticket into a 500.
+    await notifyTicketCreated({
+      ticket: TicketRequestData,
+      departmentId: requestType.departmentId,
+      actor: req.user,
+    });
+
     return res.status(201).json({ TicketRequestData });
   } catch (err) {
     next(err);
