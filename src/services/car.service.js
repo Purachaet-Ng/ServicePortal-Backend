@@ -1,8 +1,10 @@
 import {prisma} from "../lib/prisma.js"
 
+
 export const getCars = async () => {
-    return await prisma.car.findMany()
-}
+    const cars = await prisma.car.findMany()
+    return cars;
+};
 
 export const createCar = async (data) => {
 

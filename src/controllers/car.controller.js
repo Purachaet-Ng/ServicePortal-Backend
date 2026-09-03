@@ -1,16 +1,21 @@
 import carService from "../services/car.service.js"
 
 export const getCars = async (req, res) => {
-    try {
-        const cars = await carService.getCars()
+try {
+    const cars = await carService.getCars();
 
-        res.status(200).json(cars)
-    } catch (error) {
-        res.status(500).json({
-            message: error.message
-        })
-    }
-}
+    res.status(200).json({
+      success: true,
+      data: cars,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
 
 export const createCar = async (req, res) => {
     try {

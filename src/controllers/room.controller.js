@@ -1,8 +1,7 @@
 import createHttpError from "http-errors";
 import roomService, { addRoomBooking, addRoom, editBooking, editRoom } from "../services/room.service.js"
 
-export const 
-getRooms = async (req, res) => {
+export const getRooms = async (req, res) => {
   try {
     const rooms = await roomService.getRooms();
 

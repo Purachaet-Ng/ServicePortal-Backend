@@ -11,7 +11,7 @@ const reserveRoute = express.Router()
 
 reserveRoute.use(authenticate)
 // Cars
-// reserveRoute.use('/', getCars)
+// reserveRoute.use('/cars', getCars)
 // reserveRoute.post('/cars', createCar)
 // reserveRoute.patch('/carId', updateCar)
 

@@ -1,5 +1,7 @@
 @BASE_URL = http://localhost:8000
 
+
+
 # LOGIN 
 POST {{BASE_URL}}/api/auth/login
 Content-Type: application/json
@@ -8,10 +10,12 @@ Content-Type: application/json
  "email":"purachaet@company.com",
  "password":"password123"
 }
+
+//---------------------------------------------------------------
 // Reserve
 // CARS
 # ### GET reserve
-# GET {{BASE_URL}}/reserve/cars   
+# GET {{BASE_URL}}/api/reserves/cars   
 
 # ### POST reserve
 # POST {{BASE_URL}}/reserve/cars
@@ -37,9 +41,12 @@ Content-Type: application/json
 # }
 
 
+//---------------------------------------------------------
+
 // ROOMS
 ### GET reserve
 GET {{BASE_URL}}/api/reserves/rooms 
+Authorization: bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6IkFETUlOX1NZU1RFTSIsImlhdCI6MTc4ODM0MzEzOCwiZXhwIjoxNzg4OTQ3OTM4fQ.mb1qKuidpUoMaorIuNHT6L4cL9OZWBQgN4ddWjHjV9s
 
 
 ### POST room reserve
