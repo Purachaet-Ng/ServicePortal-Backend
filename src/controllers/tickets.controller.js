@@ -8,6 +8,10 @@ import {
 } from "../services/ticket.service.js";
 import { findRequestTypeById } from "../services/requestType.service.js";
 import { validateCustomFields } from "../utils/schemaValidator.js";
+import {
+  notifyTicketCreated,
+  notifyTicketUpdated,
+} from "../services/notifications.service.js";
 
 export async function ticketCreate(req, res, next) {
   try {
@@ -24,6 +28,15 @@ export async function ticketCreate(req, res, next) {
       assignedToId: rest.assignedToId ?? requestType.defaultAssigneeId,
       createdById: req.user.id,
     });
+
+    // After the create, and it swallows its own errors — a failed
+    // notification must not turn a created ticket into a 500.
+    await notifyTicketCreated({
+      ticket: TicketRequestData,
+      departmentId: requestType.departmentId,
+      actor: req.user,
+    });
+
     return res.status(201).json({ TicketRequestData });
   } catch (err) {
     next(err);
@@ -45,16 +58,26 @@ export async function ticketUpdate(req, res, next) {
     const ticketId = req.valid.params.id;
     const data = req.valid.body;
 
-     if (data.customFields) {
-      const existing = await findTicketById(ticketId);   // include: { requestType: true }
-      if (!existing) throw createHttpError(404, "Ticket not found");
+    // Read the row BEFORE the update, always. The customFields merge below
+    // needs it, and so does the notification fan-out: it compares before and
+    // after so a PATCH that repeats the current status notifies nobody.
+    // findTicketById throws 404 when the id is unknown.
+    const before = await findTicketById(ticketId);   // include: { requestType: true }
 
-       data.customFields = validateCustomFields(existing.requestType.formSchema, {
-        ...existing.customFields,   // PATCH merges, it does not replace
+    if (data.customFields) {
+      data.customFields = validateCustomFields(before.requestType.formSchema, {
+        ...before.customFields,   // PATCH merges, it does not replace
         ...data.customFields,
       });
-      }
+    }
+
     const ticket = await updateTicket(ticketId, data);
+
+    // After the update and never in front of it — this must not be able to
+    // fail a change that already committed. notifyTicketUpdated swallows its
+    // own errors.
+    await notifyTicketUpdated({ before, after: ticket, actorId: req.user.id });
+
     return res.status(200).json({ success: `Ticket ${ticketId} updated` });
   } catch (err) {
     next(err);

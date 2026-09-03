@@ -8,6 +8,7 @@ import ticketsRoutes from "./routes/tickets.route.js";
 import { pathNotFound } from "./middlewares/pathNotFound.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
 import departmentRouter from "./routes/departments.route.js";
+import notificationsRouter from "./routes/notifications.route.js";
 
 const app = express();
 
@@ -35,6 +36,8 @@ app.use(`${API}/reserves`, reserveRoute);
 app.use(`${API}/tickets`, ticketsRoutes);
 
 app.use(`${API}/departments`, departmentRouter);
+
+app.use(`${API}/notifications`, notificationsRouter);
 
 // app.use("/events");
 
