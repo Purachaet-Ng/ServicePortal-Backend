@@ -2,7 +2,7 @@ import express from 'express'
 import { getCars, createCar, updateCar } from '../controllers/car.controller.js'
 import { getRooms, createBooking, updateBooking, createRoom, updateRoom } from '../controllers/room.controller.js'
 import { validate } from '../middlewares/validate.js'
-import { createBookingSchema, createRoomSchema, updateBookingSchema, updateBookingStatusSchema, updateRoomSchema } from '../validators/room.validator.js'
+import { createRoomBookingSchema, createRoomSchema, updateRoomBookingSchema, updateRoomBookingStatusSchema, updateRoomSchema } from '../validators/room.validator.js'
 import { authenticate } from '../middlewares/auth.middleware.js'
 import { idParams } from '../validators/common.validator.js'
 
@@ -18,9 +18,9 @@ reserveRoute.use(authenticate)
 // Rooms
 reserveRoute.get('/rooms', getRooms)
 reserveRoute.post('/rooms', validate({ body: createRoomSchema }), createRoom)
-reserveRoute.post('/rooms/bookings', validate({ body: createBookingSchema }), createBooking)
+reserveRoute.post('/rooms/bookings', validate({ body: createRoomBookingSchema }), createBooking)
 reserveRoute.patch('/rooms/:id', validate({body:updateRoomSchema, params: idParams}) ,updateRoom)
-reserveRoute.patch('/rooms/bookings/:id',validate({body: updateBookingSchema,params: idParams}),updateBooking)
+reserveRoute.patch('/rooms/bookings/:id',validate({body: updateRoomBookingSchema,params: idParams}),updateBooking)
 
 
 export default reserveRoute

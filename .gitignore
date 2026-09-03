@@ -1,18 +1,16 @@
 # Dependencies
 node_modules/
 
-<<<<<<< HEAD
-/generated/prisma
-/http
-=======
 # Environment variables
 .env
 .env.*
 !.env.example
 http/
+/http
 
 # Generated Prisma Client
 generated/prisma/
+/generated/prisma
 
 # Build, coverage, and log files
 dist/
@@ -26,4 +24,6 @@ Thumbs.db
 05-คู่มือลงมือทั้งระบบ-ทีละก้อน.md
 
 01-คู่มือ-Auth-เริ่มจาก-app-use-auth.md
->>>>>>> origin
+03-คู่มือ-Departments-CRUD.md
+
+.vscode/

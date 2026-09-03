@@ -49,7 +49,7 @@ function roleCondition(user) {
       };
     case "STAFF":
       return {
-        assignedToId: user.id,
+        OR: [{ createdById: user.id }, { assignedToId: user.id }],
       };
     default:
       throw createHttpError(403, "Forbidden");
@@ -98,6 +98,19 @@ export async function deleteTicket(ticketId) {
 async function checkTicket(ticketId) {
   const ticket = await prisma.ticket.findUnique({
     where: { id: ticketId },
+  });
+
+  if (!ticket) {
+    throw createHttpError(404, "Ticket not found");
+  }
+
+  return ticket;
+}
+
+export async function findTicketById(ticketId) {
+  const ticket = await prisma.ticket.findUnique({
+    where: { id: ticketId },
+    include:{requestType: true}
   });
 
   if (!ticket) {
