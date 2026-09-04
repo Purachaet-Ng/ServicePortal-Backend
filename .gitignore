@@ -12,6 +12,9 @@ http/
 generated/prisma/
 /generated/prisma
 
+# Local-only tests — not part of the shared repo
+*.test.js
+
 # Build, coverage, and log files
 dist/
 coverage/

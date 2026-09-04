@@ -156,8 +156,7 @@ export const notifyTicketCreated = async ({ ticket, departmentId, actor }) => {
       ]),
     );
 
-    // The request type's default assignee, once createTicket() stops dropping
-    // it on the floor (doc/API.md G08). Until then this never fires.
+    // The request type's default assignee, resolved by ticketCreate().
     if (ticket.assignedToId) {
       messages.set(
         ticket.assignedToId,
