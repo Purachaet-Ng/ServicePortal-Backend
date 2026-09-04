@@ -3,6 +3,7 @@ import { validate } from "../middlewares/validate.js";
 import { authenticate, authorize } from "../middlewares/auth.middleware.js";
 import { idParams } from "../validators/common.validator.js";
 import {
+  assignableUserQuery,
   createUserSchema,
   updateUserRoleSchema,
   updateUserSchema,
@@ -14,6 +15,7 @@ import {
   updateUser,
   updateUserRole,
   deleteUser,
+  getAssignableUser,
 } from "../controllers/users.controller.js";
 
 const router = Router();
@@ -21,6 +23,13 @@ const router = Router();
 // Every route below is admin-only. Self-service (a user reading or editing
 // their own profile) still needs an owner check and is not covered here.
 router.use(authenticate);
+
+router.get(
+  "/assignable",
+  authorize("ADMIN_SYSTEM", "ADMIN_DEPT"),
+  validate({ query: assignableUserQuery }),
+  getAssignableUser,
+);
 
 router.get("/", authorize("ADMIN_SYSTEM", "ADMIN_DEPT"), listUsers);
 
@@ -58,5 +67,6 @@ router.delete(
   validate({ params: idParams }),
   deleteUser,
 );
+
 
 export default router;
