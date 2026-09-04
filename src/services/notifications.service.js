@@ -177,3 +177,26 @@ export const notifyTicketCreated = async ({ ticket, departmentId, actor }) => {
     console.error("[notifications] ticket create fan-out failed", error);
   }
 };
+
+/**
+ * Fan-out for POST /events/:id/attendees
+ * (API.md §Notifications: "you are invited to an event").
+ *
+ * Never throws, for the reason given on notifyTicketUpdated.
+ */
+export const notifyEventInvited = async ({ event, userIds, actorId }) => {
+  const recipients = userIds.filter((userId) => userId !== actorId);
+
+  if (recipients.length === 0) return;
+
+  try {
+    await prisma.notification.createMany({
+      data: recipients.map((userId) => ({
+        userId,
+        message: `You were invited to ${quoteTitle(event.title)}`,
+      })),
+    });
+  } catch (error) {
+    console.error("[notifications] event invite fan-out failed", error);
+  }
+};
