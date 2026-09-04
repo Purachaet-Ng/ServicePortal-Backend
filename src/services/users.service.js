@@ -32,8 +32,9 @@ export const findPublicUserById = async (userId) => {
   });
 };
 
-export const findAllUsers = async () => {
+export const findUsers = async (where) => {
   return await prisma.user.findMany({
+    where,
     select: publicUserSelect,
     orderBy: { id: "asc" },
   });

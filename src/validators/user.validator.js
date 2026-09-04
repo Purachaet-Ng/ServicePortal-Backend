@@ -1,4 +1,4 @@
-import z from "zod";
+import z, { coerce } from "zod";
 import { positiveId, requiredText } from "./common.validator.js";
 
 const phoneRegex = /^(?:\+66|0)[689]\d[- ]?\d{3}[- ]?\d{4}$/;
@@ -47,3 +47,7 @@ export const updateUserSchema = z
 export const updateUserRoleSchema = z.object({
   role,
 });
+
+export const assignableUserQuery = z.object({
+  department_id: positiveId("Invalid department id")
+})
