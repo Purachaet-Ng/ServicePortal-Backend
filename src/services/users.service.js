@@ -1,5 +1,6 @@
 // รวมคำสั่งที่ติดต่อกับตาราง User ไว้ที่เดียว
 import { prisma } from "../lib/prisma.js";
+import { buildPagination } from "../utils/query.js";
 
 const publicUserSelect = {
   id: true,
@@ -11,6 +12,20 @@ const publicUserSelect = {
   departmentId: true,
   createdAt: true,
 };
+
+function roleCondition(user) {
+  switch (user?.role) {
+    case "ADMIN_SYSTEM":
+      return {};
+    case "ADMIN_DEPT":
+      return {
+          departmentId: user.departmentId,
+      };
+    default:
+      throw createHttpError(403, "Forbidden");
+  }
+}
+
 
 export const findUserByEmail = async (email) => {
   return await prisma.user.findUnique({
@@ -32,12 +47,37 @@ export const findPublicUserById = async (userId) => {
   });
 };
 
-export const findUsers = async (where) => {
-  return await prisma.user.findMany({
-    where,
-    select: publicUserSelect,
-    orderBy: { id: "asc" },
-  });
+export const findUsers = async (user,{role,departmentId,q, skip, limit, page, orderBy}={}) => {
+  const where = {
+      AND: [
+        roleCondition(user),
+        ...(role ? [{ role }] : []),
+        ...(departmentId ? [{ departmentId }] : []),
+        ...(q
+          ? [
+              {
+                OR: [
+                  { firstname: { contains: q, mode: "insensitive" } },
+                  { lastname: { contains: q, mode: "insensitive" } },
+                ],
+              },
+            ]
+          : []),
+      ],
+    };
+
+  const [users, total] = await Promise.all([
+      prisma.user.findMany({
+        where,
+        orderBy: orderBy ?? { createdAt: "desc" },
+        skip,
+        take: limit,
+      }),
+      prisma.user.count({ where }),
+    ]);
+  
+    return { users, meta: buildPagination({ page, limit, total }) };
+  
 };
 
 export const updateUserById = async (userId, userFieldsToUpdate) => {

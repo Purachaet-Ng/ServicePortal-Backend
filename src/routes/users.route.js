@@ -7,6 +7,7 @@ import {
   createUserSchema,
   updateUserRoleSchema,
   updateUserSchema,
+  UserListQuery,
 } from "../validators/user.validator.js";
 import {
   createUserByAdmin,
@@ -31,7 +32,7 @@ router.get(
   getAssignableUser,
 );
 
-router.get("/", authorize("ADMIN_SYSTEM", "ADMIN_DEPT"), listUsers);
+router.get("/", authorize("ADMIN_SYSTEM", "ADMIN_DEPT"),validate({query:UserListQuery}), listUsers);
 
 router.get(
   "/:id",
