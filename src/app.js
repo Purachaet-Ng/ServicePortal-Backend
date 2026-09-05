@@ -36,7 +36,7 @@ app.use(`${API}/tickets`, ticketsRoute);
 
 app.use(`${API}/departments`, departmentRouter);
 
-app.use(`${API}/request_type`, requestTypeRouter);
+app.use(`${API}/request-types`, requestTypeRouter);
 
 // app.use("/events");
 

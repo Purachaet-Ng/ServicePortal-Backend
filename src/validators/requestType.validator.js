@@ -1,8 +1,11 @@
 import z from "zod";
 import { positiveId, requiredText } from "./common.validator.js";
 
-export const requestTypeSchema = z.object({
-  departmentId: positiveId("Invalid department id"),
+export const deptIdParams = z.object({
+  deptId: positiveId("Invalid department id"),
+});
+
+export const requestTypeBodySchema = z.object({
   name: requiredText("name"),
   description: z.string().trim().nullish(),
   formSchema: z
@@ -11,4 +14,10 @@ export const requestTypeSchema = z.object({
   defaultAssigneeId: positiveId("Invalid assignee id").nullish(),
 });
 
-export const createRequestTypeSchema = requestTypeSchema;
+export const createRequestTypeSchema = requestTypeBodySchema;
+
+export const updateRequestTypeSchema = requestTypeBodySchema
+  .partial()
+  .refine((data) => Object.keys(data).length > 0, {
+    message: "At least one field is required",
+  });
