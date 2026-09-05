@@ -1,18 +1,19 @@
 import z from "zod";
-import { requiredDate, requiredText } from "./common.validator.js";
+import { positiveId, requiredDate, requiredText } from "./common.validator.js";
+
+const eventStatus = z.enum([
+  "PENDING",
+  "APPROVE",
+  "IN_PROGRESS",
+  "LIVE",
+  "CLOSED",
+  "CANCEL",
+]);
 
 export const eventSchema = z.object({
   title: requiredText("title"),
   description: z.string().trim().nullish(),
-  status: z.enum([
-    "PENDING",
-    "APPROVE",
-    "IN_PROGRESS",
-    "LIVE",
-    "CLOSED",
-    "CANCEL",
-  ])
-  .optional(),
+  status: eventStatus.optional(),
   startTime: requiredDate("startTime"),
   endTime: requiredDate("endTime"),
 });
@@ -42,16 +43,20 @@ export const updateEventSchema = eventSchema
   );
 
 export const updateEventStatusSchema = z.object({
-  status: z.enum([
-    "PENDING",
-    "APPROVE",
-    "IN_PROGRESS",
-    "LIVE",
-    "CLOSED",
-    "CANCEL",
-  ]),
+  status: eventStatus,
 });
 
 export const updateRsvpSchema = z.object({
   rsvpStatus: z.enum(["ACCEPTED", "DECLINED", "ATTENDED", "ABSENT"]),
+});
+
+/** GET /events filters. Absent means "no bound", not "now". */
+export const listEventsQuery = z.object({
+  from: requiredDate("from").optional(),
+  to: requiredDate("to").optional(),
+  status: eventStatus.optional(),
+});
+
+export const inviteAttendeesSchema = z.object({
+  userIds: z.array(positiveId("Invalid userId")).min(1, "userIds must not be empty"),
 });

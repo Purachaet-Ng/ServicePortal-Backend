@@ -9,6 +9,8 @@ import requestTypeRouter from "./routes/requestType.route.js";
 import { pathNotFound } from "./middlewares/pathNotFound.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
 import departmentRouter from "./routes/departments.route.js";
+import notificationsRouter from "./routes/notifications.route.js";
+import eventsRouter from "./routes/events.route.js";
 
 const app = express();
 
@@ -38,7 +40,9 @@ app.use(`${API}/departments`, departmentRouter);
 
 app.use(`${API}/request-types`, requestTypeRouter);
 
-// app.use("/events");
+app.use(`${API}/notifications`, notificationsRouter);
+
+app.use(`${API}/events`, eventsRouter);
 
 // app.use("/inventories"); optional
 
