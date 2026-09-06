@@ -1,6 +1,7 @@
 // รวมคำสั่งที่ติดต่อกับตาราง User ไว้ที่เดียว
 import { prisma } from "../lib/prisma.js";
 import { buildPagination } from "../utils/query.js";
+import createHttpError from "http-errors";
 
 const publicUserSelect = {
   id: true,

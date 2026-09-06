@@ -143,10 +143,12 @@ export async function getAssignableUser(req,res,next) {
   try {
     const departmentId = req.valid.query.department_id
     console.log(typeof departmentId)
-    const user = await findUsers({departmentId})
+
+    const { users } = await findUsers(req.user, {departmentId})
     res.status(200).json({
-      user
+      user: users
     })
+    console.log('users', users)
   } catch (error) {
     next(error)
     
