@@ -1,7 +1,7 @@
 import createHttpError from "http-errors";
 import {
   createUser,
-  findAllUsers,
+  findUsers,
   findPublicUserById,
   findUserByEmail,
   updateUserById,
@@ -11,10 +11,13 @@ import bcrypt from "bcrypt";
 
 export async function listUsers(req, res, next) {
   try {
-    const allUsers = await findAllUsers();
+    let where = {}
+
+    const {users , meta} = await findUsers(req.user,req.valid.query);
 
     return res.status(200).json({
-      users: allUsers,
+      data:users,
+      meta
     });
   } catch (error) {
     next(error);
@@ -28,6 +31,10 @@ export async function getUser(req, res, next) {
 
     if (!foundUser) {
       throw createHttpError(404, "User not found");
+    }
+
+    if(req.user.role === "ADMIN_DEPT" && foundUser.departmentId !== req.user.departmentId ){
+      throw createHttpError(403, "Forbidden");
     }
 
     return res.status(200).json({
@@ -129,5 +136,19 @@ export async function deleteUser(req, res, next) {
     });
   } catch (error) {
     next(error);
+  }
+}
+
+export async function getAssignableUser(req,res,next) {
+  try {
+    const departmentId = req.valid.query.department_id
+    console.log(typeof departmentId)
+    const user = await findUsers({departmentId})
+    res.status(200).json({
+      user
+    })
+  } catch (error) {
+    next(error)
+    
   }
 }

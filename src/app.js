@@ -4,13 +4,15 @@ import reserveRoute from "./routes/reserve.route.js";
 
 import authRouter from "./routes/auth.route.js";
 import userRouter from "./routes/users.route.js";
-import ticketsRoutes from "./routes/tickets.route.js";
+import ticketsRoute from "./routes/tickets.route.js";
+import requestTypeRouter from "./routes/requestType.route.js";
 import { pathNotFound } from "./middlewares/pathNotFound.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
 import departmentRouter from "./routes/departments.route.js";
+import notificationsRouter from "./routes/notifications.route.js";
+import eventsRouter from "./routes/events.route.js";
 
 const app = express();
-
 
 app.use(express.json());
 app.use(
@@ -32,11 +34,15 @@ app.use(`${API}/users`, userRouter);
 
 app.use(`${API}/reserves`, reserveRoute);
 
-app.use(`${API}/tickets`, ticketsRoutes);
+app.use(`${API}/tickets`, ticketsRoute);
 
 app.use(`${API}/departments`, departmentRouter);
 
-// app.use("/events");
+app.use(`${API}/request-types`, requestTypeRouter);
+
+app.use(`${API}/notifications`, notificationsRouter);
+
+app.use(`${API}/events`, eventsRouter);
 
 // app.use("/inventories"); optional
 

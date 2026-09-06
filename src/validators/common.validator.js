@@ -15,3 +15,6 @@ export const requiredText = (field) =>
 
 export const requiredDate = (field) =>
   requiredText(field).pipe(z.coerce.date({ error: `Invalid ${field}` }));
+
+export const emptyToUndefined = (schema) =>
+  z.preprocess((value) => (value === "" ? undefined : value), schema);

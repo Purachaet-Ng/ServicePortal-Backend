@@ -74,7 +74,7 @@ export async function login(req, res, next) {
     }
 
     const user = await findPublicUserById(userWithPassword.id);
-
+    console.log("hello")
     return res.status(200).json({
       token: token,
       user: user,

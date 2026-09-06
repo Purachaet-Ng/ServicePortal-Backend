@@ -9,14 +9,34 @@ import {
   createDepartmentByAdmin,
   updateDepartment,
 } from "../controllers/departments.controller.js";
+import {
+  createRequestTypeByDepartment,
+  listRequestTypesByDepartment,
+} from "../controllers/requestType.controller.js";
 import { departmentSchema } from "../validators/department.validator.js";
-
+import {
+  createRequestTypeSchema,
+  deptIdParams,
+} from "../validators/requestType.validator.js";
 
 const router = Router();
 
 router.use(authenticate);
 
 router.get("/", listDepartments);
+
+router.get(
+  "/:deptId/request-types",
+  validate({ params: deptIdParams }),
+  listRequestTypesByDepartment,
+);
+
+router.post(
+  "/:deptId/request-types",
+  authorize("ADMIN_DEPT", "ADMIN_SYSTEM"),
+  validate({ params: deptIdParams, body: createRequestTypeSchema }),
+  createRequestTypeByDepartment,
+);
 
 router.get(
   "/:id",
