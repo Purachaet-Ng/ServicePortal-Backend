@@ -74,7 +74,7 @@ export const deleteCar = async (carId) => {
   })
 }
 
-export const getCarbookingBymonth = async (carId, month) => {
+export const getCarbookingByDay = async (carId, month) => {
  const startOfMonth = new Date(`${month}-01T00:00:00`)
    const endOfMonth = new Date(startOfMonth)
   endOfMonth.setMonth(endOfMonth.getMonth() + 1)
@@ -91,6 +91,17 @@ endTime: {
     },
     orderBy: {
       startTime: 'asc'
+    }
+  })
+}
+
+export const updateCarBookingStatusService = async (carBookingId, status) => {
+  return await prisma.carBooking.update({
+    where: {
+      id: carBookingId
+    },
+    data: {
+      status
     }
   })
 }

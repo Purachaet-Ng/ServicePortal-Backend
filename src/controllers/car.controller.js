@@ -1,5 +1,5 @@
 import createHttpError from "http-errors";
-import carService, { addCar, addCarBooking, deleteCar, editCar, editCarBooking, getCarBookingById, getCarbookingBymonth, getCarById } from "../services/car.service.js"
+import carService, { addCar, addCarBooking, deleteCar, editCar, editCarBooking, getCarbookingByDay, getCarBookingById, getCarById, updateCarBookingStatusService } from "../services/car.service.js"
 
 export const getCars = async (req, res) => {
 try {
@@ -85,7 +85,6 @@ export const createCarBooking = async (req, res,next) => {
   try {
     const {id} = req.user
     const data = req.valid.body;
-    // console.log('data', data)
     const booking = await addCarBooking(data,id)
 
     res.status(201).json({
@@ -157,11 +156,30 @@ export const getCarAvailability = async (req, res, next) => {
     const  carId  = req.valid.params.id
     const { date } = req.query
 
-    const bookings = await getCarbookingBymonth(carId, date)
+    const bookings = await getCarbookingByDay(carId, date)
 
    res.status(200).json({
       success: true,
       data: bookings
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const updateCarBookingStatus = async (req, res, next) => {
+  try {
+    const carBookingId = req.valid.params.id
+    const { status } = req.valid.body
+
+    const carBooking = await updateCarBookingStatusService(
+      carBookingId,
+      status
+    )
+
+    res.status(200).json({
+      success: true,
+      data: carBooking
     })
   } catch (error) {
     next(error)

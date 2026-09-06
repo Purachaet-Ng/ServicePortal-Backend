@@ -16,10 +16,10 @@ export const getRoomById = async (roomId) => {
   })
 }
 
-export const getRoomBookingById = async (bookingId) => {
+export const getRoomBookingById = async (roomBookingId) => {
   return await prisma.roomBooking.findUnique({
     where: {
-      id: bookingId
+      id: roomBookingId
     }
   })
 }
@@ -97,12 +97,24 @@ export const getRoomBookingsByDay = async (roomId, date) => {
   })
 }
 
+export const updateRoomBookingStatusService = async (roomBookingId, status) => {
+  return await prisma.roomBooking.update({
+    where: {
+      id: roomBookingId
+    },
+    data: {
+      status
+    }
+  })
+}
+
+
 export default {
-    getRooms,
-    getRoomById,
-    getRoomBookingById,
-    addRoom,
-    // createBooking,
-    editRoom,
-    editBooking
+    // getRooms,
+    // getRoomById,
+    // getRoomBookingById,
+    // addRoom,
+    // // createBooking,
+    // editRoom,
+    // editBooking
 }
