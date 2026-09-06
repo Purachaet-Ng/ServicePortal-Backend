@@ -1,5 +1,5 @@
 import createHttpError from "http-errors";
-import roomService, { addRoomBooking, addRoom, editBooking, editRoom } from "../services/room.service.js"
+import roomService, { addRoomBooking, addRoom, editBooking, editRoom, deleteRoom, getRoomById, getRoomBookingById, getRoomBookingsByDay } from "../services/room.service.js"
 
 export const getRooms = async (req, res) => {
   try {
@@ -16,6 +16,51 @@ export const getRooms = async (req, res) => {
     });
   }
 };
+
+export const getRoomByIdController = async (req, res, next) => {
+  try {
+    const roomId = req.valid.params.id
+
+    const room = await getRoomById(roomId)
+
+    if (!room) {
+      return res.status(404).json({
+        success: false,
+        message: "Room not found"
+      })
+    }
+
+    res.status(200).json({
+      success: true,
+      data: room
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const getRoomBokingByIdController = async (req, res, next) => {
+  try {
+    const bookingId = req.valid.params.id
+
+    const roomBooking = await getRoomBookingById(bookingId)
+
+    if (!roomBooking) {
+      return res.status(404).json({
+        success: false,
+        message: "RoomBooking not found"
+      })
+    }
+
+    res.status(200).json({
+      success: true,
+      data: roomBooking
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
 
 export  const createRoom = async (req, res, next) => {
     try {
@@ -34,7 +79,7 @@ export  const createRoom = async (req, res, next) => {
     }
 }
 
-export const createBooking = async (req, res,next) => {
+export const createCarBooking = async (req, res,next) => {
   try {
     const {id} = req.user
     const data = req.valid.body;
@@ -59,7 +104,7 @@ export const updateRoom = async (req, res, next) => {
     // console.log('data', data)
     const resultroomId = await editRoom(data, roomId)
     
-    res.status(201).json({
+    res.status(200).json({
       status: "success",
       data: resultroomId,
     });
@@ -71,14 +116,14 @@ export const updateRoom = async (req, res, next) => {
 
 
 
-export const updateBooking = async (req, res, next) => {
-    const bookingId = req.valid.params.id;
+export const updateRoomBooking = async (req, res, next) => {
+    const roomBookingId = req.valid.params.id;
   try {
     const data = req.valid.body;
     // console.log('data', data)
-    const resultBooking = await editBooking(data, bookingId)
+    const resultBooking = await editBooking(data, roomBookingId)
     
-    res.status(201).json({
+    res.status(200).json({
       status: "success",
       data: resultBooking,
     });
@@ -86,3 +131,39 @@ export const updateBooking = async (req, res, next) => {
     next(error)
   }
 };
+
+export const removeRoom = async (req, res, next) => {
+  try {
+    const roomId = req.valid.params.id
+
+    const room = await deleteRoom(roomId)
+
+    res.status(200).json({
+      success: true,
+      message: "Car deleted successfully",
+      data: room
+    })
+  } catch (error) {
+    if (error.code === "P2003") {
+          return next(
+            createHttpError(409, "car is in booking and cannot be deleted"),
+          );
+        }
+    next(error)
+  }
+}
+
+export const getRoomBookingsByDayController = async (req, res, next) => {
+  try {
+    const roomId = req.valid.params.id
+    const { date } = req.query
+
+    const bookings = await getRoomBookingsByDay(roomId, date)
+    res.status(200).json({
+      success: true,
+      data: bookings
+    })
+  } catch (error) {
+    next(error)
+  }
+}

@@ -8,6 +8,22 @@ export const getRooms = async () => {
     return rooms;
 };
 
+export const getRoomById = async (roomId) => {
+  return await prisma.room.findUnique({
+    where: {
+      id: roomId
+    }
+  })
+}
+
+export const getRoomBookingById = async (bookingId) => {
+  return await prisma.roomBooking.findUnique({
+    where: {
+      id: bookingId
+    }
+  })
+}
+
 export const addRoom = async (data) => {
     // const { name, location, capacity } = data;
 
@@ -45,14 +61,46 @@ export const editRoom = async (data, roomId) => {
 }
 
 
-export const editBooking = async (data, bookingId) => {
+export const editBooking = async (data, roomBookingId) => {
   return await prisma.roomBooking.update({
-    where:{id:bookingId},
+    where:{id:roomBookingId},
     data
 })
 }
+
+export const deleteRoom = async (roomId) => {
+  return await prisma.room.delete({
+    where: {
+        id: roomId},
+    //   data  
+  })
+}
+
+
+export const getRoomBookingsByDay = async (roomId, date) => {
+  const startOfDay = new Date(`${date}T00:00:00.000Z`)
+  const endOfDay = new Date(`${date}T23:59:59.999Z`)
+
+  return await prisma.roomBooking.findMany({
+    where: {
+      roomId: Number(roomId),
+      startTime: {
+        lte: endOfDay
+      },
+      endTime: {
+        gte: startOfDay
+      }
+    },
+    orderBy: {
+      startTime: 'asc'
+    }
+  })
+}
+
 export default {
     getRooms,
+    getRoomById,
+    getRoomBookingById,
     addRoom,
     // createBooking,
     editRoom,
