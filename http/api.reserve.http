@@ -1,5 +1,7 @@
 @BASE_URL = http://localhost:8000
 
+
+
 # LOGIN 
 POST {{BASE_URL}}/api/auth/login
 Content-Type: application/json
@@ -8,41 +10,103 @@ Content-Type: application/json
  "email":"purachaet@company.com",
  "password":"password123"
 }
+
+//---------------------------------------------------------------
 // Reserve
 // CARS
-# ### GET reserve
-# GET {{BASE_URL}}/reserve/cars   
+### GET reserve
+GET {{BASE_URL}}/api/reserves/cars
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6IkFETUlOX1NZU1RFTSIsImlhdCI6MTc4ODM0MzEzOCwiZXhwIjoxNzg4OTQ3OTM4fQ.mb1qKuidpUoMaorIuNHT6L4cL9OZWBQgN4ddWjHjV9s
 
-# ### POST reserve
-# POST {{BASE_URL}}/reserve/cars
-# Content-Type: application/json
+### GET ID CAR
+GET {{BASE_URL}}/api/reserves/cars/1
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6IkFETUlOX1NZU1RFTSIsImlhdCI6MTc4ODM0MzEzOCwiZXhwIjoxNzg4OTQ3OTM4fQ.mb1qKuidpUoMaorIuNHT6L4cL9OZWBQgN4ddWjHjV9s
 
-# {
-#     "id": "id",
-#     "name": "name",
-#     "email": "email",
-#     "roomId": "roomId",
-#     "startTime": "DateTime",
-#     "endTime": "DateTime"
-# }
+### GET BOOKINGID CAR
+GET {{BASE_URL}}/api/reserves/cars/bookings/56
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6IkFETUlOX1NZU1RFTSIsImlhdCI6MTc4ODM0MzEzOCwiZXhwIjoxNzg4OTQ3OTM4fQ.mb1qKuidpUoMaorIuNHT6L4cL9OZWBQgN4ddWjHjV9s
 
-# ### PATCH reserve
-# PATCH  {{BASE_URL}}/reserve/carId
-# Content-Type: application/json
+### GET bookings for room on that day
+GET {{BASE_URL}}/api/reserves/cars/1/availability?date=2026-10
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6IkFETUlOX1NZU1RFTSIsImlhdCI6MTc4ODI0MzI4OCwiZXhwIjoxNzg4ODQ4MDg4fQ.36FEa1Qz2xb0y7zrEq3SyEjl6fqo80VDEi3njxdFhzg
 
-# {
-#      "roomId": "roomId",
-#     "startTime": "DateTime",
-#     "endTime": "DateTime"
-# }
+### POST create car reserve
+POST {{BASE_URL}}/api/reserves/cars
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6IkFETUlOX1NZU1RFTSIsImlhdCI6MTc4ODM0MzEzOCwiZXhwIjoxNzg4OTQ3OTM4fQ.mb1qKuidpUoMaorIuNHT6L4cL9OZWBQgN4ddWjHjV9s
+Content-Type: application/json
 
+{
+    "name": "TOYOTA",
+    "plate": "บศ-4364",
+    "seats": 11
+}
+
+### POST create car bookings reserve
+POST {{BASE_URL}}/api/reserves/cars/bookings
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6IkFETUlOX1NZU1RFTSIsImlhdCI6MTc4ODI0MzI4OCwiZXhwIjoxNzg4ODQ4MDg4fQ.36FEa1Qz2xb0y7zrEq3SyEjl6fqo80VDEi3njxdFhzg
+Content-Type: application/json
+
+{
+    "carId": 1,
+    "startTime": "2026-10-01T09:00:00.000Z",
+    "endTime": "2026-10-01T11:00:00.000Z",
+    "status": "PENDING"
+}
+
+### PATCH update car reserve
+PATCH  {{BASE_URL}}/api/reserves/cars/1
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6IkFETUlOX1NZU1RFTSIsImlhdCI6MTc4ODI0MzI4OCwiZXhwIjoxNzg4ODQ4MDg4fQ.36FEa1Qz2xb0y7zrEq3SyEjl6fqo80VDEi3njxdFhzg
+Content-Type: application/json
+
+{
+    "name": "TOYOTA",
+    "plate": "บศ-4888",
+    "seats": 6
+}
+
+### PATCH update car booking reserve
+PATCH  {{BASE_URL}}/api/reserves/cars/bookings/55
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6IkFETUlOX1NZU1RFTSIsImlhdCI6MTc4ODI0MzI4OCwiZXhwIjoxNzg4ODQ4MDg4fQ.36FEa1Qz2xb0y7zrEq3SyEjl6fqo80VDEi3njxdFhzg
+Content-Type: application/json
+
+{
+    "startTime": "2026-09-14T10:00:00.000Z",
+    "endTime": "2026-10-17T10:00:00.000Z"   
+}
+
+### PATCH car status
+PATCH {{BASE_URL}}/api/reserves/cars/bookings/55/status
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6IkFETUlOX1NZU1RFTSIsImlhdCI6MTc4ODI0MzI4OCwiZXhwIjoxNzg4ODQ4MDg4fQ.36FEa1Qz2xb0y7zrEq3SyEjl6fqo80VDEi3njxdFhzg
+Content-Type: application/json
+
+{
+  "status": "APPROVED"
+}
+
+### DELETE car
+DELETE {{BASE_URL}}/api/reserves/cars/16
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6IkFETUlOX1NZU1RFTSIsImlhdCI6MTc4ODI0MzI4OCwiZXhwIjoxNzg4ODQ4MDg4fQ.36FEa1Qz2xb0y7zrEq3SyEjl6fqo80VDEi3njxdFhzg
+
+//-----------------------------------------------------------------------------------------------------------------------------------------------
 
 // ROOMS
 ### GET reserve
-GET {{BASE_URL}}/api/reserves/rooms 
+GET {{BASE_URL}}/api/reserves/rooms
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6IkFETUlOX1NZU1RFTSIsImlhdCI6MTc4ODM0MzEzOCwiZXhwIjoxNzg4OTQ3OTM4fQ.mb1qKuidpUoMaorIuNHT6L4cL9OZWBQgN4ddWjHjV9s
 
+### GET ID ROOM
+GET {{BASE_URL}}/api/reserves/rooms/1
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6IkFETUlOX1NZU1RFTSIsImlhdCI6MTc4ODM0MzEzOCwiZXhwIjoxNzg4OTQ3OTM4fQ.mb1qKuidpUoMaorIuNHT6L4cL9OZWBQgN4ddWjHjV9s
 
-### POST room reserve
+### GET BOOKINGID ROOM
+GET {{BASE_URL}}/api/reserves/rooms/bookings/1
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6IkFETUlOX1NZU1RFTSIsImlhdCI6MTc4ODM0MzEzOCwiZXhwIjoxNzg4OTQ3OTM4fQ.mb1qKuidpUoMaorIuNHT6L4cL9OZWBQgN4ddWjHjV9s
+
+### GET bookings for room on that day
+GET {{BASE_URL}}/api/reserves/rooms/1/bookings?date=2026-09-01
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6IkFETUlOX1NZU1RFTSIsImlhdCI6MTc4ODI0MzI4OCwiZXhwIjoxNzg4ODQ4MDg4fQ.36FEa1Qz2xb0y7zrEq3SyEjl6fqo80VDEi3njxdFhzg
+
+### POST create room reserve
 POST {{BASE_URL}}/api/reserves/rooms
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6IkFETUlOX1NZU1RFTSIsImlhdCI6MTc4ODI0MzI4OCwiZXhwIjoxNzg4ODQ4MDg4fQ.36FEa1Qz2xb0y7zrEq3SyEjl6fqo80VDEi3njxdFhzg
 Content-Type: application/json
@@ -53,21 +117,20 @@ Content-Type: application/json
     "capacity": 101
 }
 
-### POST bookings reserve
-POST {{BASE_URL}}/api/reserves/rooms/bookings  
+### POST create room bookings reserve
+POST {{BASE_URL}}/api/reserves/rooms/bookings
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6IkFETUlOX1NZU1RFTSIsImlhdCI6MTc4ODI0MzI4OCwiZXhwIjoxNzg4ODQ4MDg4fQ.36FEa1Qz2xb0y7zrEq3SyEjl6fqo80VDEi3njxdFhzg
 Content-Type: application/json
 
 {
-    "roomId": 2,
+    "roomId": 3,
     "startTime": "2026-10-01T09:00:00.000Z",
-    "endTime": "2026-10-01T11:00:00.000Z",
-    "status": "confirmed"
+    "endTime": "2026-10-10T11:00:00.000Z",
+    "status": "PENDING"
 }
 
-
-### PATCH reserve booking
-PATCH  {{BASE_URL}}/api/reserves/rooms/1
+### PATCH update room reserve booking
+PATCH  {{BASE_URL}}/api/reserves/rooms/3
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6IkFETUlOX1NZU1RFTSIsImlhdCI6MTc4ODI0MzI4OCwiZXhwIjoxNzg4ODQ4MDg4fQ.36FEa1Qz2xb0y7zrEq3SyEjl6fqo80VDEi3njxdFhzg
 Content-Type: application/json
 
@@ -76,13 +139,27 @@ Content-Type: application/json
     "location": "Floor 28",
     "capacity": 198
 }
-### PATCH reserve booking
-PATCH  {{BASE_URL}}/api/reserves/rooms/bookings/1
+### PATCH update room reserve booking
+PATCH  {{BASE_URL}}/api/reserves/rooms/bookings/3
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6IkFETUlOX1NZU1RFTSIsImlhdCI6MTc4ODI0MzI4OCwiZXhwIjoxNzg4ODQ4MDg4fQ.36FEa1Qz2xb0y7zrEq3SyEjl6fqo80VDEi3njxdFhzg
 Content-Type: application/json
 
 {
     "startTime": "2026-09-12T10:00:00.000Z",
-    "endTime": "2026-10-12T10:00:00.000Z"
-    # "status": "CANCELLED"
+    "endTime": "2026-10-12T10:00:00.000Z",
+    "status": "CANCELLED"
 }
+
+### PATCH room status
+PATCH {{BASE_URL}}/api/reserves/rooms/bookings/1/status
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6IkFETUlOX1NZU1RFTSIsImlhdCI6MTc4ODI0MzI4OCwiZXhwIjoxNzg4ODQ4MDg4fQ.36FEa1Qz2xb0y7zrEq3SyEjl6fqo80VDEi3njxdFhzg
+Content-Type: application/json
+
+{
+  "status": "APPROVED"
+}
+
+### DELETE room
+DELETE {{BASE_URL}}/api/reserves/rooms/12
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6IkFETUlOX1NZU1RFTSIsImlhdCI6MTc4ODI0MzI4OCwiZXhwIjoxNzg4ODQ4MDg4fQ.36FEa1Qz2xb0y7zrEq3SyEjl6fqo80VDEi3njxdFhzg
+
