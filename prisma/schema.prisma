@@ -307,6 +307,8 @@ model DepartmentStock {
   department   Department    @relation(fields: [departmentId], references: [id])
   itemId       Int           @map("item_id")
   item         InventoryItem @relation(fields: [itemId], references: [id])
+  onHand       Int           @default(0) @map("on_hand")
+  reserved     Int           @default(0)
   minStock     Int           @default(0) @map("min_stock")
   isActive     Boolean       @default(true) @map("is_active")
   createdAt    DateTime      @default(now()) @map("created_at")
@@ -375,23 +377,23 @@ model InventoryRequestLine {
   movements   StockMovement[]
   assignments AssetAssignment[]
 
-  @@unique([requestId, stockId])
+  @@index([requestId, stockId])
   @@index([stockId])
   @@map("inventory_request_lines")
 }
 
 model AssetAssignment {
-  id            Int                  @id @default(autoincrement())
-  assetId       Int                  @map("asset_id")
-  asset         InventoryAsset       @relation(fields: [assetId], references: [id])
-  userId        Int                  @map("user_id")
-  user          User                 @relation(fields: [userId], references: [id])
-  requestLineId Int                  @map("request_line_id")
-  requestLine   InventoryRequestLine @relation(fields: [requestLineId], references: [id])
-  assignedAt    DateTime             @default(now()) @map("assigned_at")
-  returnedAt    DateTime?            @map("returned_at")
-  conditionOut  String?              @map("condition_out")
-  conditionIn   String?              @map("condition_in")
+  id            Int                   @id @default(autoincrement())
+  assetId       Int                   @map("asset_id")
+  asset         InventoryAsset        @relation(fields: [assetId], references: [id])
+  userId        Int                   @map("user_id")
+  user          User                  @relation(fields: [userId], references: [id])
+  requestLineId Int?                  @map("request_line_id")
+  requestLine   InventoryRequestLine? @relation(fields: [requestLineId], references: [id])
+  assignedAt    DateTime              @default(now()) @map("assigned_at")
+  returnedAt    DateTime?             @map("returned_at")
+  conditionOut  String?               @map("condition_out")
+  conditionIn   String?               @map("condition_in")
 
   @@index([assetId, returnedAt])
   @@index([userId, returnedAt])
@@ -411,7 +413,6 @@ model StockMovement {
   reservedDelta Int                   @default(0) @map("reserved_delta")
   note          String?
   createdAt     DateTime              @default(now()) @map("created_at")
-  hiddenAt      DateTime?             @map("hidden_at")
 
   @@index([stockId, createdAt])
   @@index([requestLineId])
