@@ -1,9 +1,9 @@
 import createHttpError from "http-errors";
-import roomService, { addRoomBooking, addRoom, editBooking, editRoom, deleteRoom, getRoomById, getRoomBookingById, getRoomBookingsByDay, updateRoomBookingStatusService } from "../services/room.service.js"
+import { addRoomBooking, addRoom, editBooking, editRoom, deleteRoom, getRoomById, getRoomBookingById, getRoomBookingsByDay, updateRoomBookingStatusService, getAllRooms } from "../services/room.service.js"
 
 export const getRooms = async (req, res) => {
   try {
-    const rooms = await roomService.getRooms();
+    const rooms = await getAllRooms();
 
     res.status(200).json({
       success: true,
@@ -65,8 +65,6 @@ export const getRoomBokingByIdController = async (req, res, next) => {
 export  const createRoom = async (req, res, next) => {
     try {
     const body = req.valid ? req.valid.body : req.body;
-    // console.log('body', body)
-    // const { name, location, capacity } = req.body;
     const room = await addRoom(body);
 
         res.status(201).json({
@@ -79,7 +77,7 @@ export  const createRoom = async (req, res, next) => {
     }
 }
 
-export const createCarBooking = async (req, res,next) => {
+export const createRoomBooking = async (req, res,next) => {
   try {
     const {id} = req.user
     const data = req.valid.body;
@@ -95,12 +93,10 @@ export const createCarBooking = async (req, res,next) => {
   }
 };
 
-
 export const updateRoom = async (req, res, next) => {
     const roomId = req.valid.params.id;
   try {
     const data = req.valid.body;
-    // console.log('data', data)
     const resultroomId = await editRoom(data, roomId)
     
     res.status(200).json({
@@ -112,14 +108,10 @@ export const updateRoom = async (req, res, next) => {
   }
 };
 
-
-
-
 export const updateRoomBooking = async (req, res, next) => {
     const roomBookingId = req.valid.params.id;
   try {
     const data = req.valid.body;
-    // console.log('data', data)
     const resultRoomBooking = await editBooking(data, roomBookingId)
     
     res.status(200).json({
@@ -134,7 +126,6 @@ export const updateRoomBooking = async (req, res, next) => {
 export const removeRoom = async (req, res, next) => {
   try {
     const roomId = req.valid.params.id
-
     const room = await deleteRoom(roomId)
 
     res.status(200).json({
@@ -152,12 +143,12 @@ export const removeRoom = async (req, res, next) => {
   }
 }
 
-export const getCarAvailability = async (req, res, next) => {
+export const getRoomAvailability = async (req, res, next) => {
   try {
     const roomId = req.valid.params.id
     const { date } = req.query
-
     const bookings = await getRoomBookingsByDay(roomId, date)
+
     res.status(200).json({
       success: true,
       data: bookings

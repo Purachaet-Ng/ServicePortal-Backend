@@ -1,9 +1,9 @@
 import createHttpError from "http-errors";
-import carService, { addCar, addCarBooking, deleteCar, editCar, editCarBooking, getCarbookingByDay, getCarBookingById, getCarById, updateCarBookingStatusService } from "../services/car.service.js"
+import { addCar, addCarBooking, deleteCar, editCar, editCarBooking, getAllCars, getCarbookingByDay, getCarBookingById, getCarById, updateCarBookingStatusService } from "../services/car.service.js"
 
 export const getCars = async (req, res) => {
 try {
-    const cars = await carService.getCars();
+    const cars = await getAllCars();
 
     res.status(200).json({
       success: true,
@@ -66,8 +66,6 @@ export const getCarBokingByIdController = async (req, res, next) => {
 export  const createCar = async (req, res, next) => {
     try {
     const body = req.valid ? req.valid.body : req.body;
-    // console.log('body', body)
-    // const { name, location, capacity } = req.body;
     const car = await addCar(body);
 
         res.status(201).json({
@@ -79,7 +77,6 @@ export  const createCar = async (req, res, next) => {
     next(error)
     }
 }
-
 
 export const createCarBooking = async (req, res,next) => {
   try {
@@ -97,12 +94,10 @@ export const createCarBooking = async (req, res,next) => {
   }
 };
 
-
 export const updateCar = async (req, res, next) => {
     const carId = req.valid.params.id;
   try {
     const data = req.valid.body;
-    // console.log('data', data)
     const resultcarId = await editCar(data, carId)
     
     res.status(200).json({
@@ -118,7 +113,6 @@ export const updateCarBooking = async (req, res, next) => {
     const carBookingId = req.valid.params.id;
   try {
     const data = req.valid.body;
-    // console.log('data', data)
     const resultCarBooking = await editCarBooking(data, carBookingId)
     
     res.status(200).json({

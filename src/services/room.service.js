@@ -2,7 +2,7 @@ import {prisma} from '../lib/prisma.js'
 
 
 // ดึงข้อมูลห้องทั้งหมด
-export const getRooms = async () => {
+export const getAllRooms = async () => {
     const rooms = await prisma.room.findMany();
     
     return rooms;
@@ -25,8 +25,6 @@ export const getRoomBookingById = async (roomBookingId) => {
 }
 
 export const addRoom = async (data) => {
-    // const { name, location, capacity } = data;
-
     const room = await prisma.room.create({data});
     return room
 }
@@ -51,15 +49,12 @@ export const addRoomBooking = async (data,id) => {
   });
 }
 
-
-// แก้ไขการจอง
 export const editRoom = async (data, roomId) => {
   return await prisma.room.update({
     where:{id:roomId},
     data
 })
 }
-
 
 export const editBooking = async (data, roomBookingId) => {
   return await prisma.roomBooking.update({
@@ -72,7 +67,6 @@ export const deleteRoom = async (roomId) => {
   return await prisma.room.delete({
     where: {
         id: roomId},
-    //   data  
   })
 }
 
@@ -109,12 +103,4 @@ export const updateRoomBookingStatusService = async (roomBookingId, status) => {
 }
 
 
-export default {
-    // getRooms,
-    // getRoomById,
-    // getRoomBookingById,
-    // addRoom,
-    // // createBooking,
-    // editRoom,
-    // editBooking
-}
+export default {}

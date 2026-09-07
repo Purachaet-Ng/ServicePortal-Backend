@@ -1,12 +1,10 @@
 import {prisma} from "../lib/prisma.js"
 
-
-export const getCars = async () => {
+export const getAllCars = async () => {
     const cars = await prisma.car.findMany();
 
     return cars;
 };
-
 
 export const getCarById = async (carId) => {
   return await prisma.car.findUnique({
@@ -24,11 +22,7 @@ export const getCarBookingById = async (carBookingId) => {
   })
 }
 
-
-
 export const addCar = async (data) => {
-    // const { name, location, capacity } = data;
-
     const car = await prisma.car.create({data});
     return car
 }
