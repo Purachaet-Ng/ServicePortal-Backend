@@ -1,8 +1,8 @@
 import express from 'express'
 import { getCars, createCar, updateCar, createCarBooking, updateCarBooking, removeCar, getCarByIdController, getCarBokingByIdController, getCarAvailability, updateCarBookingStatus } from '../controllers/car.controller.js'
-import { getRooms, createRoom, updateRoom, updateRoomBooking, removeRoom, getRoomByIdController, getRoomBokingByIdController, updateRoomBookingStatus, getRoomAvailability, createRoomBooking } from '../controllers/room.controller.js'
+import { getRooms, createRoom, updateRoom, updateRoomBooking, removeRoom, getRoomByIdController, getRoomBokingByIdController, updateRoomBookingStatus, getRoomBookings, createRoomBooking } from '../controllers/room.controller.js'
 import { validate } from '../middlewares/validate.js'
-import { createRoomBookingSchema, createRoomSchema, updateRoomBookingSchema, updateRoomBookingStatusSchema, updateRoomSchema } from '../validators/room.validator.js'
+import { createRoomBookingSchema, createRoomSchema, dayQuerySchema, updateRoomBookingSchema, updateRoomBookingStatusSchema, updateRoomSchema } from '../validators/room.validator.js'
 import { authenticate, authorize } from '../middlewares/auth.middleware.js'
 import { idParams } from '../validators/common.validator.js'
 import { createCarBookingSchema, createCarSchema, updateCarBookingSchema, updateCarBookingStatusSchema, updateCarSchema } from '../validators/car.validator.js'
@@ -27,9 +27,15 @@ reserveRoute.delete('/cars/:id', authorize("ADMIN_SYSTEM"), validate({ params: i
 
 // Rooms
 reserveRoute.get('/rooms', getRooms)
+// MUST stay above '/rooms/:id'. Express matches in registration order, so with
+// the parameterised route first this path is read as a room whose id is the
+// string "bookings", and idParams answers 400 "Invalid id" — which is exactly
+// what the availability grid has been showing. Adding any other literal
+// '/rooms/<word>' route below that line will break the same way.
+reserveRoute.get('/rooms/bookings', validate({ query: dayQuerySchema }), getRoomBookings)
 reserveRoute.get('/rooms/:id', validate({ params: idParams}), getRoomByIdController)
 reserveRoute.get('/rooms/bookings/:id', validate({ params: idParams}), getRoomBokingByIdController)
-reserveRoute.get('/rooms/:id/bookings', validate({ params: idParams }), getRoomAvailability)
+reserveRoute.get('/rooms/:id/bookings', validate({ params: idParams, query: dayQuerySchema }), getRoomBookings)
 reserveRoute.post('/rooms', authorize("ADMIN_SYSTEM"), validate({ body: createRoomSchema }), createRoom)
 reserveRoute.post('/rooms/bookings', validate({ body: createRoomBookingSchema }), createRoomBooking)
 reserveRoute.patch('/rooms/:id', authorize("ADMIN_SYSTEM"), validate({body:updateRoomSchema, params: idParams}) ,updateRoom)

@@ -73,6 +73,10 @@ export  const createRoom = async (req, res, next) => {
       data: room,
     });
   } catch (error) {
+    // rooms.name is @unique — same 409 the departments controller gives.
+    if (error.code === "P2002") {
+      return next(createHttpError(409, "Room name already exists"));
+    }
     next(error)
     }
 }
@@ -104,6 +108,9 @@ export const updateRoom = async (req, res, next) => {
       data: resultroomId,
     });
   } catch (error) {
+    if (error.code === "P2002") {
+      return next(createHttpError(409, "Room name already exists"));
+    }
     next(error)
   }
 };
@@ -143,11 +150,21 @@ export const removeRoom = async (req, res, next) => {
   }
 }
 
-export const getRoomAvailability = async (req, res, next) => {
+/**
+ * Serves BOTH booking-by-day routes. /rooms/bookings has no :id and returns
+ * every room's day; /rooms/:id/bookings narrows to one. The only difference is
+ * whether params carry an id, so one handler covers both rather than two
+ * near-identical copies that can drift apart.
+ *
+ * `date` comes from req.valid.query now, not req.query — it is validated, so a
+ * missing or impossible date is a 400 here instead of a 500 inside Prisma.
+ */
+export const getRoomBookings = async (req, res, next) => {
   try {
-    const roomId = req.valid.params.id
-    const { date } = req.query
-    const bookings = await getRoomBookingsByDay(roomId, date)
+    const { date } = req.valid.query
+    const bookings = await getRoomBookingsByDay(date, {
+      roomId: req.valid.params?.id
+    })
 
     res.status(200).json({
       success: true,
