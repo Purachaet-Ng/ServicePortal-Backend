@@ -55,13 +55,39 @@ enum EventAttendeeStatus {
   ABSENT
 }
 
+enum InventoryRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  FULFILLED
+  CANCELLED
+}
+
+enum InventoryAssetStatus {
+  AVAILABLE
+  ASSIGNED
+  MAINTENANCE
+  RETIRED
+}
+
+enum StockMovementType {
+  IN
+  RESERVE
+  RELEASE
+  OUT
+  RETURN
+  ADJUST
+}
+
 // ---------------- Shared tables ----------------
 
 model Department {
-  id           Int           @id @default(autoincrement())
-  name         String        @unique
-  users        User[]
-  requestTypes RequestType[]
+  id                Int                @id @default(autoincrement())
+  name              String             @unique
+  users             User[]
+  requestTypes      RequestType[]
+  inventoryStocks   DepartmentStock[]
+  inventoryRequests InventoryRequest[]
 
   @@map("departments")
 }
@@ -77,14 +103,18 @@ model User {
   departmentId Int?        @map("department_id")
   department   Department? @relation(fields: [departmentId], references: [id])
 
-  createdTickets  Ticket[]        @relation("TicketCreatedBy")
-  assignedTickets Ticket[]        @relation("TicketAssignedTo")
-  comments        Comment[]
-  notifications   Notification[]
-  roomBookings    RoomBooking[]
-  carBookings     CarBooking[]
-  organizedEvents Event[]
-  eventAttendance EventAttendee[]
+  createdTickets            Ticket[]           @relation("TicketCreatedBy")
+  assignedTickets           Ticket[]           @relation("TicketAssignedTo")
+  comments                  Comment[]
+  notifications             Notification[]
+  roomBookings              RoomBooking[]
+  carBookings               CarBooking[]
+  organizedEvents           Event[]
+  eventAttendance           EventAttendee[]
+  inventoryRequests         InventoryRequest[] @relation("InventoryRequester")
+  reviewedInventoryRequests InventoryRequest[] @relation("InventoryReviewer")
+  stockMovements            StockMovement[]
+  assetAssignments          AssetAssignment[]
 
   // Reservations this user approved or rejected, as an admin.
   approvedRoomBookings RoomBooking[] @relation("RoomBookingApprover")
@@ -252,4 +282,139 @@ model Notification {
   createdAt DateTime  @default(now()) @map("created_at")
 
   @@map("notifications")
+}
+
+// ---------------- Inventory module ----------------
+
+model InventoryItem {
+  id           Int      @id @default(autoincrement())
+  sku          String   @unique
+  name         String
+  unit         String
+  isSerialized Boolean  @default(false) @map("is_serialized")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  stocks DepartmentStock[]
+
+  @@map("inventory_items")
+}
+
+model DepartmentStock {
+  id           Int           @id @default(autoincrement())
+  departmentId Int           @map("department_id")
+  department   Department    @relation(fields: [departmentId], references: [id])
+  itemId       Int           @map("item_id")
+  item         InventoryItem @relation(fields: [itemId], references: [id])
+  onHand       Int           @default(0) @map("on_hand")
+  reserved     Int           @default(0)
+  minStock     Int           @default(0) @map("min_stock")
+  isActive     Boolean       @default(true) @map("is_active")
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
+
+  assets       InventoryAsset[]
+  requestLines InventoryRequestLine[]
+  movements    StockMovement[]
+
+  @@unique([departmentId, itemId])
+  @@index([departmentId, isActive])
+  @@map("department_stocks")
+}
+
+model InventoryAsset {
+  id        Int                  @id @default(autoincrement())
+  stockId   Int                  @map("stock_id")
+  stock     DepartmentStock      @relation(fields: [stockId], references: [id])
+  serialNo  String               @unique @map("serial_no")
+  assetTag  String?              @unique @map("asset_tag")
+  condition String?
+  status    InventoryAssetStatus @default(AVAILABLE)
+  createdAt DateTime             @default(now()) @map("created_at")
+  updatedAt DateTime             @updatedAt @map("updated_at")
+
+  requestLines InventoryRequestLine[]
+  assignments  AssetAssignment[]
+
+  @@index([stockId, status])
+  @@map("inventory_assets")
+}
+
+model InventoryRequest {
+  id               Int                    @id @default(autoincrement())
+  requesterId      Int                    @map("requester_id")
+  requester        User                   @relation("InventoryRequester", fields: [requesterId], references: [id])
+  fromDepartmentId Int                    @map("from_department_id")
+  fromDepartment   Department             @relation(fields: [fromDepartmentId], references: [id])
+  reason           String?
+  rejectionReason  String?                @map("rejection_reason")
+  status           InventoryRequestStatus @default(PENDING)
+  reviewedById     Int?                   @map("reviewed_by_id")
+  reviewedBy       User?                  @relation("InventoryReviewer", fields: [reviewedById], references: [id])
+  reviewedAt       DateTime?              @map("reviewed_at")
+  fulfilledAt      DateTime?              @map("fulfilled_at")
+  createdAt        DateTime               @default(now()) @map("created_at")
+  updatedAt        DateTime               @updatedAt @map("updated_at")
+
+  lines InventoryRequestLine[]
+
+  @@index([requesterId, status])
+  @@index([fromDepartmentId, status])
+  @@map("inventory_requests")
+}
+
+model InventoryRequestLine {
+  id        Int              @id @default(autoincrement())
+  requestId Int              @map("request_id")
+  request   InventoryRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  stockId   Int              @map("stock_id")
+  stock     DepartmentStock  @relation(fields: [stockId], references: [id])
+  assetId   Int?             @map("asset_id")
+  asset     InventoryAsset?  @relation(fields: [assetId], references: [id])
+  quantity  Int
+
+  movements   StockMovement[]
+  assignments AssetAssignment[]
+
+  @@index([requestId, stockId])
+  @@index([stockId])
+  @@map("inventory_request_lines")
+}
+
+model AssetAssignment {
+  id            Int                   @id @default(autoincrement())
+  assetId       Int                   @map("asset_id")
+  asset         InventoryAsset        @relation(fields: [assetId], references: [id])
+  userId        Int                   @map("user_id")
+  user          User                  @relation(fields: [userId], references: [id])
+  requestLineId Int?                  @map("request_line_id")
+  requestLine   InventoryRequestLine? @relation(fields: [requestLineId], references: [id])
+  assignedAt    DateTime              @default(now()) @map("assigned_at")
+  returnedAt    DateTime?             @map("returned_at")
+  conditionOut  String?               @map("condition_out")
+  conditionIn   String?               @map("condition_in")
+
+  @@index([assetId, returnedAt])
+  @@index([userId, returnedAt])
+  @@map("asset_assignments")
+}
+
+model StockMovement {
+  id            Int                   @id @default(autoincrement())
+  stockId       Int                   @map("stock_id")
+  stock         DepartmentStock       @relation(fields: [stockId], references: [id])
+  requestLineId Int?                  @map("request_line_id")
+  requestLine   InventoryRequestLine? @relation(fields: [requestLineId], references: [id])
+  actorId       Int                   @map("actor_id")
+  actor         User                  @relation(fields: [actorId], references: [id])
+  type          StockMovementType
+  onHandDelta   Int                   @default(0) @map("on_hand_delta")
+  reservedDelta Int                   @default(0) @map("reserved_delta")
+  note          String?
+  createdAt     DateTime              @default(now()) @map("created_at")
+
+  @@index([stockId, createdAt])
+  @@index([requestLineId])
+  @@map("stock_movements")
 }
