@@ -175,7 +175,8 @@ export const updateCarBookingStatus = async (req, res, next) => {
 
     const carBooking = await updateCarBookingStatusService(
       carBookingId,
-      status
+      status,
+      req.user.id
     )
 
     res.status(200).json({

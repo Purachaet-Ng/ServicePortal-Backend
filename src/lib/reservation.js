@@ -1,3 +1,5 @@
+import createHttpError from 'http-errors'
+
 /**
  * What rooms and cars share about holding a slot.
  *
@@ -39,6 +41,48 @@ export const HOLDS_A_SLOT = ['PENDING', 'APPROVED']
 export const isOverlapViolation = (err) =>
   err?.meta?.driverAdapterError?.cause?.code === '23P01' ||
   String(err?.message ?? '').includes('23P01')
+
+/**
+ * The owner withdraws their own booking.
+ *
+ * Here rather than duplicated across room.service.js and car.service.js because
+ * this is a RULE about who may release a slot, and a rule that reads one way for
+ * rooms and another for cars is a bug waiting for whoever edits only one file.
+ *
+ * `delegate` is prisma.roomBooking or prisma.carBooking. The two models are
+ * identical in every field this touches, so the query is genuinely the same
+ * query — passing the delegate is what lets it stay one function rather than a
+ * switch on a string.
+ *
+ * The statuses you may cancel FROM are exactly HOLDS_A_SLOT, and that is not a
+ * coincidence to be tidied away later: cancelling means giving the slot back, so
+ * a booking that holds nothing has nothing to give. Cancelling an already
+ * CANCELLED or REJECTED booking is a 409 rather than a silent no-op, because the
+ * caller asked for a state change that did not happen.
+ *
+ * Deliberately NOT reachable through the admin /status route — see the /cancel
+ * routes in reserve.route.js. This function can only ever write CANCELLED.
+ */
+export const cancelOwnBooking = async (delegate, id, userId) => {
+  const booking = await delegate.findUnique({ where: { id } })
+
+  if (!booking) {
+    throw createHttpError(404, 'Booking not found')
+  }
+  // 403 and not 404: the booking exists and the caller may well be looking at
+  // it — every authenticated user can already READ any booking by id.
+  if (booking.userId !== userId) {
+    throw createHttpError(403, 'You can only cancel your own booking')
+  }
+  if (!HOLDS_A_SLOT.includes(booking.status)) {
+    throw createHttpError(409, `This booking is already ${booking.status.toLowerCase()}`)
+  }
+
+  return await delegate.update({
+    where: { id },
+    data: { status: 'CANCELLED' },
+  })
+}
 
 // en-GB, not en-US: the test and the rest of the UI want "1 Sept 2026", not
 // "Sep 1, 2026". Built once — a DateTimeFormat is expensive to construct.

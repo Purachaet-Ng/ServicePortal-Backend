@@ -24,10 +24,26 @@ export const getRoomById = async (roomId) => {
   })
 }
 
+/**
+ * One booking, with everything the detail page names on screen.
+ *
+ * The relations are the whole point of the include. A bare findUnique answers
+ * `roomId: 2, userId: 5`, and a page rendering that has to fire two more
+ * requests to turn the numbers into "Meeting Room B" and "Somchai P." — for a
+ * record the database can hand over whole in one round trip.
+ *
+ * The `user` select copies getRoomBookingsByDay below: same three fields, so
+ * fullName() reads the same shape wherever a booking arrives from.
+ */
 export const getRoomBookingById = async (roomBookingId) => {
   return await prisma.roomBooking.findUnique({
     where: {
       id: roomBookingId
+    },
+    include: {
+      room: true,
+      user: { select: { id: true, firstname: true, lastname: true, email: true } },
+      approvedBy: { select: { id: true, firstname: true, lastname: true } }
     }
   })
 }
@@ -208,13 +224,24 @@ export const getRoomBookingsByDay = async (date, { roomId } = {}, db = prisma) =
   })
 }
 
-export const updateRoomBookingStatusService = async (roomBookingId, status) => {
+/**
+ * An admin settles a booking.
+ *
+ * approvedById and approvedAt are written HERE and nowhere else. They were
+ * columns nothing ever filled, so "who approved this, and when" was a question
+ * the schema promised to answer and could not — the detail page's rail rendered
+ * two permanent em dashes. Stamped on every settlement, rejection included:
+ * the column pair records who decided, not who said yes.
+ */
+export const updateRoomBookingStatusService = async (roomBookingId, status, approverId) => {
   return await prisma.roomBooking.update({
     where: {
       id: roomBookingId
     },
     data: {
-      status
+      status,
+      approvedById: approverId ?? null,
+      approvedAt: new Date()
     }
   })
 }

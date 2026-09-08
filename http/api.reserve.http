@@ -163,3 +163,20 @@ Content-Type: application/json
 DELETE {{BASE_URL}}/api/reserves/rooms/12
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6IkFETUlOX1NZU1RFTSIsImlhdCI6MTc4ODI0MzI4OCwiZXhwIjoxNzg4ODQ4MDg4fQ.36FEa1Qz2xb0y7zrEq3SyEjl6fqo80VDEi3njxdFhzg
 
+
+# ---------------------------------------------------------------- my bookings
+# Rooms and cars in one list, filtered by the token — there is no way to ask
+# for someone else's. Replace the token below with a STAFF one to see that.
+
+### GET my bookings
+GET {{BASE_URL}}/api/reserves/bookings/mine
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6IkFETUlOX1NZU1RFTSIsImlhdCI6MTc4ODI0MzI4OCwiZXhwIjoxNzg4ODQ4MDg4fQ.36FEa1Qz2xb0y7zrEq3SyEjl6fqo80VDEi3njxdFhzg
+
+### PATCH cancel my room booking
+# 403 with a token that is not the booking's owner, 409 if it is already settled.
+PATCH {{BASE_URL}}/api/reserves/rooms/bookings/1/cancel
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6IkFETUlOX1NZU1RFTSIsImlhdCI6MTc4ODI0MzI4OCwiZXhwIjoxNzg4ODQ4MDg4fQ.36FEa1Qz2xb0y7zrEq3SyEjl6fqo80VDEi3njxdFhzg
+
+### PATCH cancel my car booking
+PATCH {{BASE_URL}}/api/reserves/cars/bookings/1/cancel
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6IkFETUlOX1NZU1RFTSIsImlhdCI6MTc4ODI0MzI4OCwiZXhwIjoxNzg4ODQ4MDg4fQ.36FEa1Qz2xb0y7zrEq3SyEjl6fqo80VDEi3njxdFhzg

@@ -182,7 +182,8 @@ export const updateRoomBookingStatus = async (req, res, next) => {
 
     const roomBooking = await updateRoomBookingStatusService(
       roomBookingId,
-      status
+      status,
+      req.user.id
     )
 
     res.status(200).json({

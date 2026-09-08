@@ -17,10 +17,20 @@ export const getCarById = async (carId) => {
   })
 }
 
+/**
+ * One booking, with its car, its requester and whoever settled it — the same
+ * include as getRoomBookingById, for the same reason: the detail page names all
+ * three on screen and a bare findUnique returns only their ids.
+ */
 export const getCarBookingById = async (carBookingId) => {
   return await prisma.carBooking.findUnique({
     where: {
       id: carBookingId
+    },
+    include: {
+      car: true,
+      user: { select: { id: true, firstname: true, lastname: true, email: true } },
+      approvedBy: { select: { id: true, firstname: true, lastname: true } }
     }
   })
 }
@@ -163,13 +173,16 @@ endTime: {
   })
 }
 
-export const updateCarBookingStatusService = async (carBookingId, status) => {
+/** Settles a car booking, stamping the approver — see the room twin. */
+export const updateCarBookingStatusService = async (carBookingId, status, approverId) => {
   return await prisma.carBooking.update({
     where: {
       id: carBookingId
     },
     data: {
-      status
+      status,
+      approvedById: approverId ?? null,
+      approvedAt: new Date()
     }
   })
 }
