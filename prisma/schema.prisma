@@ -141,7 +141,15 @@ model Ticket {
 
 model Room {
   id       Int     @id @default(autoincrement())
-  name     String
+  // Unique so the room list cannot grow two "Meeting Room A"s — a booking names
+  // its room, and two rooms with one name make every booking ambiguous to read.
+  //
+  // citext, so "meeting room a" collides with "Meeting Room A" as well. A plain
+  // unique index is case-SENSITIVE, and the pair of rooms it would let through
+  // are indistinguishable to everyone except the database. The type carries the
+  // rule, so every findUnique and every future query gets it for free — nothing
+  // has to remember to call lower().
+  name     String  @unique @db.Citext
   location String?
   capacity Int
 

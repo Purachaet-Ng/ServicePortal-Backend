@@ -66,13 +66,24 @@ async function upsertUser({ email, firstname, lastname, role, departmentId, phon
   });
 }
 
-/** Rooms have no unique constraint on `name`, so match by name + location. */
+/**
+ * rooms.name is @unique and citext, so the name alone is the key.
+ *
+ * This used to match on name + location, from when nothing stopped two rooms
+ * sharing a name. Under the constraint that lookup is actively unsafe: move a
+ * room to another floor from the admin page and the seed would no longer find
+ * it, fall through to create, and die on the unique index — breaking the
+ * promise at the top of this file that re-running is always safe.
+ *
+ * location is restored alongside capacity for the same reason it always was:
+ * this is demo data, and a re-seed puts the documented values back.
+ */
 async function upsertRoom({ name, location, capacity }) {
-  const existing = await prisma.room.findFirst({ where: { name, location } });
-
-  return existing
-    ? prisma.room.update({ where: { id: existing.id }, data: { capacity } })
-    : prisma.room.create({ data: { name, location, capacity } });
+  return prisma.room.upsert({
+    where: { name },
+    update: { location, capacity },
+    create: { name, location, capacity },
+  });
 }
 
 /** Request types are unique per department by name, but not at the DB level. */

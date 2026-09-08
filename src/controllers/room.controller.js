@@ -73,6 +73,10 @@ export  const createRoom = async (req, res, next) => {
       data: room,
     });
   } catch (error) {
+    // rooms.name is @unique — same 409 the departments controller gives.
+    if (error.code === "P2002") {
+      return next(createHttpError(409, "Room name already exists"));
+    }
     next(error)
     }
 }
@@ -104,6 +108,9 @@ export const updateRoom = async (req, res, next) => {
       data: resultroomId,
     });
   } catch (error) {
+    if (error.code === "P2002") {
+      return next(createHttpError(409, "Room name already exists"));
+    }
     next(error)
   }
 };
