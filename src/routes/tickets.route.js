@@ -7,7 +7,7 @@ import {
   updateTicketSchema,
   updateTicketStatusSchema,
 } from "../validators/ticket.validator.js";
-import { idParams } from "../validators/common.validator.js";
+import { idParams, attachmentParams } from "../validators/common.validator.js";
 import {
   ticketUpdate,
   ticketCreate,
@@ -15,6 +15,12 @@ import {
   getTicket,
   ListTickets,
 } from "../controllers/tickets.controller.js";
+import {
+  requireTicketAccess,
+  attachmentUpload,
+  attachmentDownload,
+} from "../controllers/attachments.controller.js";
+import { uploadAttachments } from "../middlewares/upload.js";
 
 const router = express.Router();
 
@@ -46,6 +52,24 @@ router.patch(
     body: updateTicketStatusSchema,
   }),
   ticketUpdate,
+);
+
+// Attachments. No authorize() — like GET /:id, who may touch these depends on
+// the ROW (creator / assignee), and findTicketById() inside requireTicketAccess
+// is the gate. The guard sits in front of uploadAttachments so a forbidden
+// caller never gets to write bytes into uploads/.
+router.post(
+  "/:id/attachments",
+  validate({ params: idParams }),
+  requireTicketAccess,
+  uploadAttachments,
+  attachmentUpload,
+);
+
+router.get(
+  "/:id/attachments/:attachmentId",
+  validate({ params: attachmentParams }),
+  attachmentDownload,
 );
 
 router.delete(

@@ -74,6 +74,10 @@ export  const createCar = async (req, res, next) => {
       data: car,
     });
   } catch (error) {
+    // cars.plate is @unique — same 409 rooms and departments give.
+    if (error.code === "P2002") {
+      return next(createHttpError(409, "Plate already exists"));
+    }
     next(error)
     }
 }
@@ -105,6 +109,9 @@ export const updateCar = async (req, res, next) => {
       data: resultcarId,
     });
   } catch (error) {
+    if (error.code === "P2002") {
+      return next(createHttpError(409, "Plate already exists"));
+    }
     next(error)
   }
 };
