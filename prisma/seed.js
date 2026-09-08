@@ -118,6 +118,35 @@ async function createBookingIfMissing({ roomId, userId, startTime, endTime }) {
   return prisma.roomBooking.create({ data: { roomId, userId, startTime, endTime } });
 }
 
+/** cars.plate is @unique, so the plate alone is the key — same shape as rooms. */
+async function upsertCar({ name, plate, seats, location }) {
+  return prisma.car.upsert({
+    where: { plate },
+    update: { name, seats, location },
+    create: { name, plate, seats, location },
+  });
+}
+
+/**
+ * Matched on carId + startTime, like room bookings: a re-seed leaves a status
+ * you changed while testing alone.
+ *
+ * There is no overlap guard here and none in addCarBooking either — cars have
+ * no exclusion constraint the way room_bookings do (migration
+ * 20260907130000). The trips below are written not to collide; nothing but
+ * care keeps them that way.
+ */
+async function createCarBookingIfMissing({ carId, userId, startTime, endTime, status }) {
+  const existing = await prisma.carBooking.findFirst({
+    where: { carId, startTime },
+  });
+  if (existing) return existing;
+
+  return prisma.carBooking.create({
+    data: { carId, userId, startTime, endTime, status },
+  });
+}
+
 /** Local-time helper so demo bookings always land on a sensible clock hour. */
 function at(daysFromToday, hour, minute = 0) {
   const date = new Date();
@@ -399,6 +428,82 @@ async function main() {
     ].map(upsertRoom),
   );
   console.log("rooms        6 rooms on floors 2, 3 and 5");
+
+  // -- cars ------------------------------------------------------------------
+  const [commuter, fortuner, city, dmax] = await Promise.all(
+    [
+      { name: "Toyota Commuter", plate: "ฮค-4488", seats: 12, location: "Basement B1" },
+      { name: "Toyota Fortuner", plate: "กข-1234", seats: 7, location: "Basement B1" },
+      { name: "Honda City", plate: "ขค-5678", seats: 5, location: "Basement B2" },
+      { name: "Isuzu D-Max", plate: "งจ-3456", seats: 4, location: "Loading bay" },
+    ].map(upsertCar),
+  );
+  console.log("cars         4 vehicles, plates in Thai (the mixed-script case)");
+
+  // -- car bookings ----------------------------------------------------------
+  //
+  // A CAR BOOKING IS A TRIP, NOT A MEETING. That is the whole difference from
+  // room bookings above, and it is why the Cars page draws a range of days
+  // where the Rooms page draws one day of hours: a van goes to the provinces on
+  // Monday and comes back on Thursday, and the useful question is "which DAYS
+  // is it out", not "which hour".
+  //
+  // Seed data has to say that, or the screen gets designed against the wrong
+  // shape — which is exactly what happened when these rows were hand-made and
+  // every one of them was a 3-hour errand.
+  //
+  // The set below is deliberate, one row per case the grid has to survive:
+  await createCarBookingIfMissing({
+    carId: commuter.id,
+    userId: nid.id,
+    startTime: at(1, 8),
+    endTime: at(3, 18),
+    status: "APPROVED",
+  });
+  await createCarBookingIfMissing({
+    carId: fortuner.id,
+    userId: anucha.id,
+    startTime: at(5, 8),
+    endTime: at(11, 17),
+    status: "APPROVED",
+  });
+  // Pending, so the grid has something to draw hatched. A pending trip is
+  // occupied space, not free space.
+  await createCarBookingIfMissing({
+    carId: city.id,
+    userId: somchai.id,
+    startTime: at(2, 9),
+    endTime: at(3, 17),
+    status: "PENDING",
+  });
+  // The short one. Cars are mostly multi-day, but not always, and a half-day
+  // errand still has to render inside its single column rather than vanish.
+  await createCarBookingIfMissing({
+    carId: dmax.id,
+    userId: thanakorn.id,
+    startTime: at(0, 9),
+    endTime: at(0, 16),
+    status: "APPROVED",
+  });
+  // Straddles the month boundary in most months. The availability endpoint is
+  // keyed by MONTH (getCarbookingByDay), so this is the row that proves a
+  // window crossing 1st-of-month still draws whole.
+  await createCarBookingIfMissing({
+    carId: city.id,
+    userId: wipa.id,
+    startTime: at(20, 8),
+    endTime: at(26, 18),
+    status: "APPROVED",
+  });
+  // Rejected, and therefore FREE space. If this ever draws, the grid is lying.
+  await createCarBookingIfMissing({
+    carId: dmax.id,
+    userId: somying.id,
+    startTime: at(4, 8),
+    endTime: at(6, 18),
+    status: "REJECTED",
+  });
+  console.log("carBookings  6 trips: 4 multi-day, 1 same-day, 1 rejected (must not draw)");
 
   // -- tickets, one in every status (PLAN.md §6) ----------------------------
   // Titles and status/priority pairings come from the ticket-list mockup in
