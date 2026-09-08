@@ -18,3 +18,9 @@ export const requiredDate = (field) =>
 
 export const emptyToUndefined = (schema) =>
   z.preprocess((value) => (value === "" ? undefined : value), schema);
+
+/** For nested routes like /tickets/:id/attachments/:attachmentId. */
+export const attachmentParams = z.object({
+  id: positiveId("Invalid ticket id"),
+  attachmentId: positiveId("Invalid attachment id"),
+});

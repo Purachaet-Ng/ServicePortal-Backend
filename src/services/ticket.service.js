@@ -1,12 +1,18 @@
 import createHttpError from "http-errors";
 import { prisma } from "../lib/prisma.js";
 import { buildPagination } from "../utils/query.js";
+import {
+  attachmentSelect,
+  storedNamesForTicket,
+  removeStoredFiles,
+} from "./attachment.service.js";
 
 /** Every ticket response carries these, so there is one copy of the shape. */
 const ticketInclude = {
   requestType: { select: { id: true, name: true, departmentId: true } },
   createdBy: { select: { id: true, firstname: true, lastname: true } },
   assignedTo: { select: { id: true, firstname: true, lastname: true } },
+  attachments: { select: attachmentSelect },
 };
 
 export async function createTicket(TicketRequestData) {
@@ -158,6 +164,10 @@ export async function updateTicket(ticketId, data) {
 export async function deleteTicket(ticketId, user) {
   await findTicketById(ticketId, user);   // 404 / 403 before anything is destroyed
 
+  // Read the disk names BEFORE the delete: attachments cascade with the ticket,
+  // so after the commit there is nothing left to tell us which files to unlink.
+  const storedNames = await storedNamesForTicket(ticketId);
+
   // comments.entity_id is polymorphic, so the database will NOT stop us from
   // orphaning a thread here — there is no FK to cascade. Clear it ourselves,
   // in the same transaction, or the rows outlive the ticket forever.
@@ -170,6 +180,10 @@ export async function deleteTicket(ticketId, user) {
       include: ticketInclude,
     }),
   ]);
+
+  // After the commit, never inside the transaction — a file that will not
+  // unlink must not roll back a delete that already succeeded.
+  await removeStoredFiles(storedNames);
 
   return ticket;
 }
@@ -190,7 +204,7 @@ export async function deleteTicket(ticketId, user) {
 export async function findTicketById(ticketId, user) {
   const ticket = await prisma.ticket.findFirst({
     where: { AND: [{ id: ticketId }, roleCondition(user)] },
-    include: { requestType: true },
+    include: { requestType: true, attachments: { select: attachmentSelect } },
   });
 
   if (ticket) return ticket;

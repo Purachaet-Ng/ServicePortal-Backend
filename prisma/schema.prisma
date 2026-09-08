@@ -115,6 +115,7 @@ model User {
   reviewedInventoryRequests InventoryRequest[] @relation("InventoryReviewer")
   stockMovements            StockMovement[]
   assetAssignments          AssetAssignment[]
+  uploadedAttachments       Attachment[]
 
   // Reservations this user approved or rejected, as an admin.
   approvedRoomBookings RoomBooking[] @relation("RoomBookingApprover")
@@ -157,10 +158,37 @@ model Ticket {
   assignedToId Int?  @map("assigned_to")
   assignedTo   User? @relation("TicketAssignedTo", fields: [assignedToId], references: [id])
 
+  attachments Attachment[]
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("tickets")
+}
+
+// A real FK with onDelete: Cascade, NOT the polymorphic entity_type/entity_id
+// shape Comment uses - that shape is exactly why deleteTicket() has to
+// hand-clear comments in a transaction. Widen this to other modules only when
+// a second one actually needs attachments.
+model Attachment {
+  id       Int    @id @default(autoincrement())
+  ticketId Int    @map("ticket_id")
+  ticket   Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  // What the user called it (shown in the UI) vs. what is actually on disk (a
+  // random name). Never join the two: an original filename is caller-supplied
+  // and "../../.env" is a legal string.
+  filename   String
+  storedName String @map("stored_name")
+  mimeType   String @map("mime_type")
+  size       Int
+
+  uploadedById Int  @map("uploaded_by")
+  uploadedBy   User @relation(fields: [uploadedById], references: [id])
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("attachments")
 }
 
 // ---------------- Reserve module: rooms and cars ----------------
