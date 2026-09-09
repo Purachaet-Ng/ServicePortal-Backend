@@ -112,7 +112,10 @@ export const addCarBooking = async (data, id, db = prisma) => {
           endTime: data.endTime,
           car: { connect: { id: data.carId } },
           user: { connect: { id } }
-        }
+        },
+        // The admin fan-out names the car; without this the controller would
+        // need a second query just to say what was booked.
+        include: { car: { select: { name: true } } }
       })
     } catch (err) {
       // The race the check above cannot win: someone took the vehicle between
@@ -183,7 +186,9 @@ export const updateCarBookingStatusService = async (carBookingId, status, approv
       status,
       approvedById: approverId ?? null,
       approvedAt: new Date()
-    }
+    },
+    // The requester fan-out names the car and needs userId to address them.
+    include: { car: { select: { name: true } } }
   })
 }
 

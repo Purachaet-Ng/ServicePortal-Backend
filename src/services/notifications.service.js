@@ -3,6 +3,7 @@ import { prisma } from "../lib/prisma.js";
 const notificationSelect = {
   id: true,
   message: true,
+  link: true,
   readAt: true,
   createdAt: true,
 };
@@ -114,9 +115,15 @@ export const notifyTicketUpdated = async ({ before, after, actorId }) => {
 
   if (messages.size === 0) return;
 
+  const link = `/tickets/${after.id}`;
+
   try {
     await prisma.notification.createMany({
-      data: [...messages].map(([userId, message]) => ({ userId, message })),
+      data: [...messages].map(([userId, message]) => ({
+        userId,
+        message,
+        link,
+      })),
     });
   } catch (error) {
     console.error("[notifications] ticket fan-out failed", error);
@@ -169,8 +176,14 @@ export const notifyTicketCreated = async ({ ticket, departmentId, actor }) => {
 
     if (messages.size === 0) return;
 
+    const link = `/tickets/${ticket.id}`;
+
     await prisma.notification.createMany({
-      data: [...messages].map(([userId, message]) => ({ userId, message })),
+      data: [...messages].map(([userId, message]) => ({
+        userId,
+        message,
+        link,
+      })),
     });
   } catch (error) {
     console.error("[notifications] ticket create fan-out failed", error);
@@ -193,9 +206,81 @@ export const notifyEventInvited = async ({ event, userIds, actorId }) => {
       data: recipients.map((userId) => ({
         userId,
         message: `You were invited to ${quoteTitle(event.title)}`,
+        link: `/events/${event.id}`,
       })),
     });
   } catch (error) {
     console.error("[notifications] event invite fan-out failed", error);
+  }
+};
+
+/**
+ * Fan-out for POST /reserves/{rooms,cars}/:id/book. One function for both —
+ * a room booking and a car booking are the same shape once you have the
+ * resource's name, and duplicating this per type would just be two copies to
+ * keep in sync.
+ *
+ * Recipients are every ADMIN_DEPT and ADMIN_SYSTEM, not one department's
+ * admins: room_bookings/car_bookings carry no department, and neither does
+ * the approval queue (getPendingBookings in booking.service.js) — so there is
+ * no narrower "the right admins" to pick.
+ *
+ * Never throws, for the reason given on notifyTicketUpdated.
+ */
+export const notifyBookingCreated = async ({ type, booking, resourceName, actor }) => {
+  try {
+    const admins = await prisma.user.findMany({
+      where: { role: { in: ["ADMIN_DEPT", "ADMIN_SYSTEM"] } },
+      select: { id: true },
+    });
+
+    const requester = `${actor.firstname} ${actor.lastname}`.trim() || "Someone";
+    const recipients = admins
+      .map(({ id }) => id)
+      // An admin booking their own room/car does not need telling.
+      .filter((id) => id !== actor.id);
+
+    if (recipients.length === 0) return;
+
+    await prisma.notification.createMany({
+      data: recipients.map((userId) => ({
+        userId,
+        message: `${requester} requested to book ${quoteTitle(resourceName)}`,
+        link: `/bookings/${type}/${booking.id}`,
+      })),
+    });
+  } catch (error) {
+    console.error(`[notifications] ${type} booking create fan-out failed`, error);
+  }
+};
+
+/**
+ * Fan-out for PATCH /reserves/{rooms,cars}/bookings/:id/status.
+ *
+ * Only APPROVED and REJECTED reach here in practice: CANCELLED is set by
+ * cancelMyBooking on the requester's own booking, and telling someone their
+ * own action happened is pointless. PENDING never arrives on a status PATCH.
+ *
+ * Never throws, for the reason given on notifyTicketUpdated.
+ */
+export const notifyBookingStatusChanged = async ({
+  type,
+  booking,
+  resourceName,
+  actorId,
+}) => {
+  // Nobody needs telling about their own action.
+  if (booking.userId === actorId) return;
+
+  try {
+    await prisma.notification.create({
+      data: {
+        userId: booking.userId,
+        message: `Your booking for ${quoteTitle(resourceName)} was ${booking.status.toLowerCase()}`,
+        link: `/bookings/${type}/${booking.id}`,
+      },
+    });
+  } catch (error) {
+    console.error(`[notifications] ${type} booking status fan-out failed`, error);
   }
 };
