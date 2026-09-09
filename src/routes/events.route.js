@@ -3,6 +3,7 @@ import { authenticate, authorize } from "../middlewares/auth.middleware.js";
 import { validate } from "../middlewares/validate.js";
 import { idParams } from "../validators/common.validator.js";
 import {
+  checkInSchema,
   createEventSchema,
   inviteAttendeesSchema,
   listEventsQuery,
@@ -12,8 +13,10 @@ import {
 import {
   addAttendees,
   cancelEvent,
+  checkInEvent,
   createEventByAdmin,
   getEvent,
+  getEventQr,
   listAttendees,
   listEvents,
   setRsvp,
@@ -35,8 +38,7 @@ router.post(
   createEventByAdmin,
 );
 
-// PATCH/DELETE/invite are organizer-or-ADMIN_SYSTEM, which authorize() cannot
-// express — the controller checks organizerId against req.user.
+// The controller also checks event ownership.
 router.patch(
   "/:id",
   validate({ params: idParams, body: updateEventSchema }),
@@ -46,6 +48,15 @@ router.patch(
 router.delete("/:id", validate({ params: idParams }), cancelEvent);
 
 router.get("/:id/attendees", validate({ params: idParams }), listAttendees);
+
+router.get("/:id/qr", validate({ params: idParams }), getEventQr);
+
+router.post(
+  "/:id/check-in",
+  authorize("ADMIN_DEPT", "ADMIN_SYSTEM"),
+  validate({ params: idParams, body: checkInSchema }),
+  checkInEvent,
+);
 
 router.post(
   "/:id/rsvp",

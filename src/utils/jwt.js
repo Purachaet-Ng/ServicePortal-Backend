@@ -69,3 +69,27 @@ export const verifyAdminSystemToken = async (token) => {
 
   return payload
 }
+
+// Event QR
+const getEventQrSecret = () => {
+  if (!process.env.EVENT_QR_SECRET) {
+    throw new Error('EVENT_QR_SECRET is required')
+  }
+
+  return process.env.EVENT_QR_SECRET
+}
+
+export const createEventQrToken = ({ eventId, userId, endTime }) =>
+  jwt.sign(
+    {
+      type: 'EVENT_CHECKIN',
+      eventId,
+      userId,
+      exp: Math.floor(new Date(endTime).getTime() / 1000) + 2 * 60 * 60
+    },
+    getEventQrSecret(),
+    { algorithm: 'HS256' }
+  )
+
+export const verifyEventQrToken = (token) =>
+  jwt.verify(token, getEventQrSecret(), { algorithms: ['HS256'] })

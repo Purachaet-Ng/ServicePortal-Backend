@@ -13,27 +13,44 @@ const eventSelect = {
 
 const attendeeSelect = {
   rsvpStatus: true,
+  checkedInAt: true,
+  checkedInById: true,
   user: { select: { id: true, firstname: true, lastname: true, email: true } },
 };
 
-/**
- * No implicit "upcoming" filter — the caller passes `from` (API.md §Events).
- * A list with no filters is the whole calendar, oldest first.
- */
-export const findAllEvents = async ({ from, to, status }) => {
-  return await prisma.event.findMany({
+/** Returns all events unless filters are provided. */
+export const findAllEvents = async ({ from, to, status }, staffId) => {
+  const events = await prisma.event.findMany({
     where: {
       ...(status ? { status } : {}),
       ...(from || to
         ? { startTime: { ...(from ? { gte: from } : {}), ...(to ? { lte: to } : {}) } }
         : {}),
+      ...(staffId ? { attendees: { some: { userId: staffId } } } : {}),
     },
-    select: eventSelect,
+    select: {
+      ...eventSelect,
+      ...(staffId
+        ? {
+            attendees: {
+              where: { userId: staffId },
+              select: { rsvpStatus: true },
+            },
+          }
+        : {}),
+    },
     orderBy: [{ startTime: "asc" }, { id: "asc" }],
   });
+
+  if (!staffId) return events;
+
+  return events.map(({ attendees, ...event }) => ({
+    ...event,
+    rsvpStatus: attendees[0]?.rsvpStatus ?? null,
+  }));
 };
 
-/** Includes the attendee list — GET /events/:id shows it in one round trip. */
+/** Returns one event with its attendees. */
 export const findEventById = async (eventId) => {
   return await prisma.event.findUnique({
     where: { id: eventId },
@@ -61,20 +78,78 @@ export const findAttendeesByEventId = async (eventId) => {
   });
 };
 
-/**
- * (event_id, user_id) is the composite primary key, so a second RSVP updates
- * instead of 409-ing (API.md §Events).
- */
-export const upsertRsvp = async (eventId, userId, rsvpStatus) => {
-  return await prisma.eventAttendee.upsert({
+/** Finds one invited attendee. */
+export const findAttendeeByEventAndUser = async (eventId, userId) => {
+  return await prisma.eventAttendee.findUnique({
     where: { eventId_userId: { eventId, userId } },
-    create: { eventId, userId, rsvpStatus },
-    update: { rsvpStatus },
     select: attendeeSelect,
   });
 };
 
-/** skipDuplicates: re-inviting somebody already on the list is a no-op. */
+/** Updates an existing invitation response. */
+export const upsertRsvp = async (eventId, userId, rsvpStatus) => {
+  return await prisma.eventAttendee.update({
+    where: { eventId_userId: { eventId, userId } },
+    data: { rsvpStatus },
+    select: attendeeSelect,
+  });
+};
+
+/** Checks in an accepted attendee once. */
+export const checkInAttendee = async (eventId, userId, checkedInById) => {
+  return await prisma.$transaction(async (tx) => {
+    const { count } = await tx.eventAttendee.updateMany({
+      where: {
+        eventId,
+        userId,
+        rsvpStatus: "ACCEPTED",
+        checkedInAt: null,
+      },
+      data: {
+        rsvpStatus: "ATTENDED",
+        checkedInAt: new Date(),
+        checkedInById,
+      },
+    });
+
+    if (!count) return null;
+
+    return await tx.eventAttendee.findUnique({
+      where: { eventId_userId: { eventId, userId } },
+      select: attendeeSelect,
+    });
+  });
+};
+
+/** Closes the event and marks missing attendees absent. */
+export const closeEvent = async (eventId, eventFieldsToUpdate) => {
+  const [event] = await prisma.$transaction([
+    prisma.event.update({
+      where: { id: eventId },
+      data: { ...eventFieldsToUpdate, status: "CLOSED" },
+      select: eventSelect,
+    }),
+    prisma.eventAttendee.updateMany({
+      where: { eventId, rsvpStatus: "ACCEPTED" },
+      data: { rsvpStatus: "ABSENT" },
+    }),
+  ]);
+
+  return event;
+};
+
+/** Counts staff allowed to join the event. */
+export const countInvitableUsers = async (userIds, departmentId) => {
+  return await prisma.user.count({
+    where: {
+      id: { in: userIds },
+      role: "STAFF",
+      ...(departmentId === undefined ? {} : { departmentId }),
+    },
+  });
+};
+
+/** Ignores staff who are already invited. */
 export const inviteAttendees = async (eventId, userIds) => {
   return await prisma.eventAttendee.createMany({
     data: userIds.map((userId) => ({ eventId, userId })),
