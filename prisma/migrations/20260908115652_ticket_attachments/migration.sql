@@ -5,7 +5,10 @@
 
 */
 -- AlterTable
-ALTER TABLE "users" DROP COLUMN "deactivated_at";
+-- IF EXISTS: no earlier migration ever created this column (it came from a
+-- `db push`), so a replay from scratch onto a shadow database has nothing to
+-- drop. Without the guard every future `migrate dev` fails at this migration.
+ALTER TABLE "users" DROP COLUMN IF EXISTS "deactivated_at";
 
 -- CreateTable
 CREATE TABLE "attachments" (
