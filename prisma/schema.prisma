@@ -110,7 +110,8 @@ model User {
   roomBookings              RoomBooking[]
   carBookings               CarBooking[]
   organizedEvents           Event[]
-  eventAttendance           EventAttendee[]
+  eventAttendance           EventAttendee[] @relation("EventAttendeeUser")
+  eventCheckins             EventAttendee[] @relation("EventCheckinBy")
   inventoryRequests         InventoryRequest[] @relation("InventoryRequester")
   reviewedInventoryRequests InventoryRequest[] @relation("InventoryReviewer")
   stockMovements            StockMovement[]
@@ -286,8 +287,11 @@ model EventAttendee {
   eventId    Int                 @map("event_id")
   event      Event               @relation(fields: [eventId], references: [id])
   userId     Int                 @map("user_id")
-  user       User                @relation(fields: [userId], references: [id])
+  user       User                @relation("EventAttendeeUser", fields: [userId], references: [id])
   rsvpStatus EventAttendeeStatus @default(INVITED) @map("rsvp_status")
+  checkedInAt   DateTime?        @map("checked_in_at")
+  checkedInById Int?             @map("checked_in_by_id")
+  checkedInBy   User?            @relation("EventCheckinBy", fields: [checkedInById], references: [id])
 
   @@id([eventId, userId])
   @@map("event_attendees")
