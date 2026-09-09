@@ -125,7 +125,10 @@ export const addRoomBooking = async (data, id, db = prisma) => {
           endTime: data.endTime,
           room: { connect: { id: data.roomId } },
           user: { connect: { id } }
-        }
+        },
+        // The admin fan-out names the room; without this the controller would
+        // need a second query just to say what was booked.
+        include: { room: { select: { name: true } } }
       })
     } catch (err) {
       // The race the check above cannot win: someone booked the slot between
@@ -242,7 +245,9 @@ export const updateRoomBookingStatusService = async (roomBookingId, status, appr
       status,
       approvedById: approverId ?? null,
       approvedAt: new Date()
-    }
+    },
+    // The requester fan-out names the room and needs userId to address them.
+    include: { room: { select: { name: true } } }
   })
 }
 
