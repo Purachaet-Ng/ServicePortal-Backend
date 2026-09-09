@@ -1,5 +1,6 @@
 import createHttpError from "http-errors";
 import { addCar, addCarBooking, deleteCar, editCar, editCarBooking, getAllCars, getCarbookingByDay, getCarBookingById, getCarById, updateCarBookingStatusService } from "../services/car.service.js"
+import { notifyBookingCreated, notifyBookingStatusChanged } from "../services/notifications.service.js"
 
 export const getCars = async (req, res) => {
 try {
@@ -87,6 +88,14 @@ export const createCarBooking = async (req, res,next) => {
     const {id} = req.user
     const data = req.valid.body;
     const booking = await addCarBooking(data,id)
+
+    // Notification must not turn a created booking into a 500.
+    await notifyBookingCreated({
+      type: "car",
+      booking,
+      resourceName: booking.car.name,
+      actor: req.user,
+    });
 
     res.status(201).json({
       success: true,
@@ -178,6 +187,15 @@ export const updateCarBookingStatus = async (req, res, next) => {
       status,
       req.user.id
     )
+
+    // The status write has already committed; a failed notification must not
+    // turn it into a 500 (same reasoning as notifyTicketUpdated).
+    await notifyBookingStatusChanged({
+      type: "car",
+      booking: carBooking,
+      resourceName: carBooking.car.name,
+      actorId: req.user.id,
+    })
 
     res.status(200).json({
       success: true,

@@ -1,5 +1,6 @@
 import createHttpError from "http-errors";
 import { addRoomBooking, addRoom, editBooking, editRoom, deleteRoom, getRoomById, getRoomBookingById, getRoomBookingsByDay, updateRoomBookingStatusService, getAllRooms } from "../services/room.service.js"
+import { notifyBookingCreated, notifyBookingStatusChanged } from "../services/notifications.service.js"
 
 export const getRooms = async (req, res) => {
   try {
@@ -86,6 +87,14 @@ export const createRoomBooking = async (req, res,next) => {
     const {id} = req.user
     const data = req.valid.body;
     const booking = await addRoomBooking(data,id)
+
+    // Notification must not turn a created booking into a 500.
+    await notifyBookingCreated({
+      type: "room",
+      booking,
+      resourceName: booking.room.name,
+      actor: req.user,
+    });
 
     res.status(201).json({
       success: true,
@@ -185,6 +194,15 @@ export const updateRoomBookingStatus = async (req, res, next) => {
       status,
       req.user.id
     )
+
+    // The status write has already committed; a failed notification must not
+    // turn it into a 500 (same reasoning as notifyTicketUpdated).
+    await notifyBookingStatusChanged({
+      type: "room",
+      booking: roomBooking,
+      resourceName: roomBooking.room.name,
+      actorId: req.user.id,
+    })
 
     res.status(200).json({
       success: true,
