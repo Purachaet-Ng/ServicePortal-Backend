@@ -1,4 +1,5 @@
 import { prisma } from "../lib/prisma.js";
+import { sendMail } from "../lib/mailer.js";
 
 const notificationSelect = {
   id: true,
@@ -75,6 +76,39 @@ const quoteTitle = (title) =>
   `"${title.length > MAX_TITLE ? `${title.slice(0, MAX_TITLE - 1)}\u2026` : title}"`;
 
 /**
+ * Emails the same people the same sentence they were just given in the app.
+ * Every fan-out below already builds a `Map<userId, message>` and a link to
+ * write its rows from, so it hands those straight over.
+ *
+ * The addresses cost one query the fan-outs would not otherwise make \u2014 but
+ * only when mail is switched on, and one shared shape here beats threading
+ * `email` through five different recipient lookups.
+ *
+ * Never throws, for the reason given on notifyTicketUpdated. sendMail is
+ * deliberately not awaited: see its comment.
+ */
+const mailNotifications = async (messages, link) => {
+  if (!process.env.SMTP_HOST) return;
+
+  try {
+    const users = await prisma.user.findMany({
+      where: { id: { in: [...messages.keys()] } },
+      select: { id: true, email: true },
+    });
+
+    // Relative in the app, absolute in an inbox.
+    const base = process.env.CORS_ORIGIN ?? "";
+
+    for (const { id, email } of users) {
+      const message = messages.get(id);
+      sendMail(email, message, `${message}\n\n${base}${link}`);
+    }
+  } catch (error) {
+    console.error("[mail] recipient lookup failed", error);
+  }
+};
+
+/**
  * Fan-out for PATCH /tickets/:id and /tickets/:id/status
  * (API.md \u00a7Notifications: "a ticket is assigned, a ticket's status changes").
  *
@@ -125,6 +159,8 @@ export const notifyTicketUpdated = async ({ before, after, actorId }) => {
         link,
       })),
     });
+
+    await mailNotifications(messages, link);
   } catch (error) {
     console.error("[notifications] ticket fan-out failed", error);
   }
@@ -185,6 +221,8 @@ export const notifyTicketCreated = async ({ ticket, departmentId, actor }) => {
         link,
       })),
     });
+
+    await mailNotifications(messages, link);
   } catch (error) {
     console.error("[notifications] ticket create fan-out failed", error);
   }
@@ -201,14 +239,18 @@ export const notifyEventInvited = async ({ event, userIds, actorId }) => {
 
   if (recipients.length === 0) return;
 
+  const message = `You were invited to ${quoteTitle(event.title)}`;
+  const link = `/events/${event.id}`;
+
   try {
     await prisma.notification.createMany({
-      data: recipients.map((userId) => ({
-        userId,
-        message: `You were invited to ${quoteTitle(event.title)}`,
-        link: `/events/${event.id}`,
-      })),
+      data: recipients.map((userId) => ({ userId, message, link })),
     });
+
+    await mailNotifications(
+      new Map(recipients.map((userId) => [userId, message])),
+      link,
+    );
   } catch (error) {
     console.error("[notifications] event invite fan-out failed", error);
   }
@@ -242,13 +284,17 @@ export const notifyBookingCreated = async ({ type, booking, resourceName, actor 
 
     if (recipients.length === 0) return;
 
+    const message = `${requester} requested to book ${quoteTitle(resourceName)}`;
+    const link = `/bookings/${type}/${booking.id}`;
+
     await prisma.notification.createMany({
-      data: recipients.map((userId) => ({
-        userId,
-        message: `${requester} requested to book ${quoteTitle(resourceName)}`,
-        link: `/bookings/${type}/${booking.id}`,
-      })),
+      data: recipients.map((userId) => ({ userId, message, link })),
     });
+
+    await mailNotifications(
+      new Map(recipients.map((userId) => [userId, message])),
+      link,
+    );
   } catch (error) {
     console.error(`[notifications] ${type} booking create fan-out failed`, error);
   }
@@ -272,14 +318,15 @@ export const notifyBookingStatusChanged = async ({
   // Nobody needs telling about their own action.
   if (booking.userId === actorId) return;
 
+  const message = `Your booking for ${quoteTitle(resourceName)} was ${booking.status.toLowerCase()}`;
+  const link = `/bookings/${type}/${booking.id}`;
+
   try {
     await prisma.notification.create({
-      data: {
-        userId: booking.userId,
-        message: `Your booking for ${quoteTitle(resourceName)} was ${booking.status.toLowerCase()}`,
-        link: `/bookings/${type}/${booking.id}`,
-      },
+      data: { userId: booking.userId, message, link },
     });
+
+    await mailNotifications(new Map([[booking.userId, message]]), link);
   } catch (error) {
     console.error(`[notifications] ${type} booking status fan-out failed`, error);
   }
