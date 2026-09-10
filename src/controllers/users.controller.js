@@ -142,7 +142,7 @@ export async function deleteUser(req, res, next) {
 export async function getAssignableUser(req,res,next) {
   try {
     const departmentId = req.valid.query.department_id
-    console.log(typeof departmentId)
+    // console.log(typeof departmentId)
 
     const { users } = await findUsers(req.user, {departmentId})
     res.status(200).json({
