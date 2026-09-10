@@ -123,6 +123,10 @@ export const addRoomBooking = async (data, id, db = prisma) => {
         data: {
           startTime: data.startTime,
           endTime: data.endTime,
+          // Optional, and `undefined` when the box was left empty — which
+          // stores NULL rather than "". Unlike status below, this one IS
+          // honoured: it is the requester's own words about their own booking.
+          purpose: data.purpose,
           room: { connect: { id: data.roomId } },
           user: { connect: { id } }
         },
@@ -236,13 +240,18 @@ export const getRoomBookingsByDay = async (date, { roomId } = {}, db = prisma) =
  * two permanent em dashes. Stamped on every settlement, rejection included:
  * the column pair records who decided, not who said yes.
  */
-export const updateRoomBookingStatusService = async (roomBookingId, status, approverId) => {
+export const updateRoomBookingStatusService = async (roomBookingId, status, approverId, rejectionReason) => {
   return await prisma.roomBooking.update({
     where: {
       id: roomBookingId
     },
     data: {
       status,
+      // Cleared on anything that is not a rejection. An admin who rejects, is
+      // argued with, and then approves would otherwise leave the refusal
+      // sentence sitting under an APPROVED booking, where it reads as current.
+      // bookingStatusSchema guarantees a REJECTED write always carries one.
+      rejectionReason: status === 'REJECTED' ? rejectionReason : null,
       approvedById: approverId ?? null,
       approvedAt: new Date()
     },

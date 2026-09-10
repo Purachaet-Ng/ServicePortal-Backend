@@ -110,6 +110,9 @@ export const addCarBooking = async (data, id, db = prisma) => {
         data: {
           startTime: data.startTime,
           endTime: data.endTime,
+          // Honoured, unlike status — see the room twin. For a trip this is
+          // usually the destination.
+          purpose: data.purpose,
           car: { connect: { id: data.carId } },
           user: { connect: { id } }
         },
@@ -177,13 +180,15 @@ endTime: {
 }
 
 /** Settles a car booking, stamping the approver — see the room twin. */
-export const updateCarBookingStatusService = async (carBookingId, status, approverId) => {
+export const updateCarBookingStatusService = async (carBookingId, status, approverId, rejectionReason) => {
   return await prisma.carBooking.update({
     where: {
       id: carBookingId
     },
     data: {
       status,
+      // Cleared unless this is a rejection — see the room twin for why.
+      rejectionReason: status === 'REJECTED' ? rejectionReason : null,
       approvedById: approverId ?? null,
       approvedAt: new Date()
     },

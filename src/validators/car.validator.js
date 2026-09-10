@@ -1,5 +1,11 @@
 import z from "zod";
-import { positiveId, requiredDate, requiredText } from "./common.validator.js";
+import {
+  bookingStatusSchema,
+  optionalNote,
+  positiveId,
+  requiredDate,
+  requiredText,
+} from "./common.validator.js";
 
 // Car
 export const carSchema = z.object({
@@ -23,6 +29,10 @@ export const carBookingSchema = z.object({
   status: z.enum(["PENDING", "APPROVED", "REJECTED", "CANCELLED"]),
   startTime: requiredDate("startTime"),
   endTime: requiredDate("endTime"),
+  // Optional on purpose. A required free-text box collects the word "meeting"
+  // from everyone in a week and tells the approver nothing; an optional one is
+  // filled by the people who have something worth saying.
+  purpose: optionalNote(),
 });
 
 export const createCarBookingSchema = carBookingSchema.refine(
@@ -49,6 +59,6 @@ export const updateCarBookingSchema = carBookingSchema
     },
   );
 
-export const updateCarBookingStatusSchema = z.object({
-  status: z.enum(["PENDING", "APPROVED", "REJECTED", "CANCELLED"]),
-});
+// The rule about rejections needing a reason is identical for rooms and cars,
+// so it is defined once — see bookingStatusSchema in common.validator.js.
+export const updateCarBookingStatusSchema = bookingStatusSchema;

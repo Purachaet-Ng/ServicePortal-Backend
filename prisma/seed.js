@@ -109,13 +109,15 @@ async function createTicketIfMissing({ title, ...rest }) {
   return { ticket, created: true };
 }
 
-async function createBookingIfMissing({ roomId, userId, startTime, endTime }) {
+async function createBookingIfMissing({ roomId, userId, startTime, endTime, purpose }) {
   const existing = await prisma.roomBooking.findFirst({
     where: { roomId, startTime },
   });
   if (existing) return existing;
 
-  return prisma.roomBooking.create({ data: { roomId, userId, startTime, endTime } });
+  return prisma.roomBooking.create({
+    data: { roomId, userId, startTime, endTime, purpose },
+  });
 }
 
 /** cars.plate is @unique, so the plate alone is the key — same shape as rooms. */
@@ -136,14 +138,16 @@ async function upsertCar({ name, plate, seats, location }) {
  * 20260907130000). The trips below are written not to collide; nothing but
  * care keeps them that way.
  */
-async function createCarBookingIfMissing({ carId, userId, startTime, endTime, status }) {
+async function createCarBookingIfMissing({
+  carId, userId, startTime, endTime, status, purpose, rejectionReason,
+}) {
   const existing = await prisma.carBooking.findFirst({
     where: { carId, startTime },
   });
   if (existing) return existing;
 
   return prisma.carBooking.create({
-    data: { carId, userId, startTime, endTime, status },
+    data: { carId, userId, startTime, endTime, status, purpose, rejectionReason },
   });
 }
 
@@ -459,6 +463,7 @@ async function main() {
     startTime: at(1, 8),
     endTime: at(3, 18),
     status: "APPROVED",
+    purpose: "Site visit — Rayong plant",
   });
   await createCarBookingIfMissing({
     carId: fortuner.id,
@@ -466,6 +471,7 @@ async function main() {
     startTime: at(5, 8),
     endTime: at(11, 17),
     status: "APPROVED",
+    purpose: "Upcountry dealer tour — Chiang Mai and Lampang",
   });
   // Pending, so the grid has something to draw hatched. A pending trip is
   // occupied space, not free space.
@@ -475,6 +481,7 @@ async function main() {
     startTime: at(2, 9),
     endTime: at(3, 17),
     status: "PENDING",
+    purpose: "Client meetings in Ayutthaya",
   });
   // The short one. Cars are mostly multi-day, but not always, and a half-day
   // errand still has to render inside its single column rather than vanish.
@@ -484,6 +491,7 @@ async function main() {
     startTime: at(0, 9),
     endTime: at(0, 16),
     status: "APPROVED",
+    purpose: "Collect server hardware from the supplier",
   });
   // Straddles the month boundary in most months. The availability endpoint is
   // keyed by MONTH (getCarbookingByDay), so this is the row that proves a
@@ -494,6 +502,7 @@ async function main() {
     startTime: at(20, 8),
     endTime: at(26, 18),
     status: "APPROVED",
+    purpose: "Regional audit, four provinces",
   });
   // Rejected, and therefore FREE space. If this ever draws, the grid is lying.
   await createCarBookingIfMissing({
@@ -502,6 +511,11 @@ async function main() {
     startTime: at(4, 8),
     endTime: at(6, 18),
     status: "REJECTED",
+    purpose: "Move office furniture to the new branch",
+    // The only seeded rejection, and now the only row that demonstrates a
+    // requester being told WHY. Without it the rejected branch on the detail
+    // page renders an empty box.
+    rejectionReason: "The D-Max is booked for the plant delivery those days. Try the Fortuner, or move to the following week.",
   });
   console.log("carBookings  6 trips: 4 multi-day, 1 same-day, 1 rejected (must not draw)");
 
@@ -718,13 +732,18 @@ async function main() {
     userId: wipa.id,
     startTime: at(0, 9),
     endTime: at(0, 10),
+    purpose: "Sprint review with the vendor",
   });
   await createBookingIfMissing({
     roomId: meetingB.id,
     userId: anucha.id,
     startTime: at(0, 14),
     endTime: at(0, 15, 30),
+    purpose: "Interview — backend candidate, second round",
   });
+  // No purpose, deliberately. It is optional, so at least one seeded row has to
+  // be missing it or the detail page's "no purpose given" branch never renders
+  // in a demo and nobody notices it is broken.
   await createBookingIfMissing({
     roomId: meetingA.id,
     userId: somchai.id,
@@ -736,12 +755,14 @@ async function main() {
     userId: nid.id,
     startTime: at(1, 13),
     endTime: at(1, 15),
+    purpose: "New-hire onboarding session",
   });
   await createBookingIfMissing({
     roomId: boardRoom.id,
     userId: purachaet.id,
     startTime: at(7, 10),
     endTime: at(7, 11, 30),
+    purpose: "Quarterly budget review",
   });
   console.log("bookings     5 bookings, incl. the 09:00-10:00 Meeting Room B clash from API.md");
 

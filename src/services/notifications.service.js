@@ -318,7 +318,13 @@ export const notifyBookingStatusChanged = async ({
   // Nobody needs telling about their own action.
   if (booking.userId === actorId) return;
 
-  const message = `Your booking for ${quoteTitle(resourceName)} was ${booking.status.toLowerCase()}`;
+  // The reason rides along on a rejection. A bare "was rejected" sends the
+  // requester to the page to find out why, and the email — which is the copy
+  // most of them actually read — could not tell them at all.
+  const outcome = `Your booking for ${quoteTitle(resourceName)} was ${booking.status.toLowerCase()}`;
+  const message = booking.rejectionReason
+    ? `${outcome}: ${booking.rejectionReason}`
+    : outcome;
   const link = `/bookings/${type}/${booking.id}`;
 
   try {
