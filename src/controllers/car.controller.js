@@ -180,12 +180,13 @@ export const getCarAvailability = async (req, res, next) => {
 export const updateCarBookingStatus = async (req, res, next) => {
   try {
     const carBookingId = req.valid.params.id
-    const { status } = req.valid.body
+    const { status, rejectionReason } = req.valid.body
 
     const carBooking = await updateCarBookingStatusService(
       carBookingId,
       status,
-      req.user.id
+      req.user.id,
+      rejectionReason
     )
 
     // The status write has already committed; a failed notification must not

@@ -226,6 +226,16 @@ model RoomBooking {
   startTime    DateTime          @map("start_time")
   endTime      DateTime          @map("end_time")
   status       ReservationStatus @default(PENDING)
+
+  // Why the room is wanted, and — if it was refused — why. Both are free text
+  // and both are optional at the database level; the rule that a REJECTED
+  // booking must carry a reason lives in bookingStatusSchema, because it is a
+  // rule about one TRANSITION, not about the row. A row rejected before this
+  // column existed has no reason, and a NOT NULL here could not have been added
+  // without inventing one for it.
+  purpose         String?
+  rejectionReason String? @map("rejection_reason")
+
   approvedById Int?              @map("approved_by")
   approvedBy   User?             @relation("RoomBookingApprover", fields: [approvedById], references: [id])
   approvedAt   DateTime?         @map("approved_at")
@@ -257,6 +267,13 @@ model CarBooking {
   startTime    DateTime          @map("start_time")
   endTime      DateTime          @map("end_time")
   status       ReservationStatus @default(PENDING)
+
+  // The room twin's comment applies verbatim. For a car the purpose is usually
+  // where it is going, which is the one thing a fleet admin cannot infer from
+  // the dates.
+  purpose         String?
+  rejectionReason String? @map("rejection_reason")
+
   approvedById Int?              @map("approved_by")
   approvedBy   User?             @relation("CarBookingApprover", fields: [approvedById], references: [id])
   approvedAt   DateTime?         @map("approved_at")
