@@ -180,3 +180,26 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6I
 ### PATCH cancel my car booking
 PATCH {{BASE_URL}}/api/reserves/cars/bookings/1/cancel
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6IkFETUlOX1NZU1RFTSIsImlhdCI6MTc4ODI0MzI4OCwiZXhwIjoxNzg4ODQ4MDg4fQ.36FEa1Qz2xb0y7zrEq3SyEjl6fqo80VDEi3njxdFhzg
+
+### PATCH room status — REJECT (the reason is REQUIRED)
+# Without "rejectionReason" this comes back 400: bookingStatusSchema refuses a
+# refusal that does not say why. The requester sees this sentence in their
+# notification and in the email.
+PATCH {{BASE_URL}}/api/reserves/rooms/bookings/1/status
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6IkFETUlOX1NZU1RFTSIsImlhdCI6MTc4ODI0MzI4OCwiZXhwIjoxNzg4ODQ4MDg4fQ.36FEa1Qz2xb0y7zrEq3SyEjl6fqo80VDEi3njxdFhzg
+Content-Type: application/json
+
+{
+  "status": "REJECTED",
+  "rejectionReason": "The board room is held for the audit that week — try Thursday."
+}
+
+### PATCH car status — REJECT
+PATCH {{BASE_URL}}/api/reserves/cars/bookings/55/status
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6IkFETUlOX1NZU1RFTSIsImlhdCI6MTc4ODI0MzI4OCwiZXhwIjoxNzg4ODQ4MDg4fQ.36FEa1Qz2xb0y7zrEq3SyEjl6fqo80VDEi3njxdFhzg
+Content-Type: application/json
+
+{
+  "status": "REJECTED",
+  "rejectionReason": "The D-Max is on the plant delivery those days. Try the Fortuner."
+}

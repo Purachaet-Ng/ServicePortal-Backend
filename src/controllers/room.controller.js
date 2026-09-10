@@ -187,12 +187,13 @@ export const getRoomBookings = async (req, res, next) => {
 export const updateRoomBookingStatus = async (req, res, next) => {
   try {
     const roomBookingId = req.valid.params.id
-    const { status } = req.valid.body
+    const { status, rejectionReason } = req.valid.body
 
     const roomBooking = await updateRoomBookingStatusService(
       roomBookingId,
       status,
-      req.user.id
+      req.user.id,
+      rejectionReason
     )
 
     // The status write has already committed; a failed notification must not
