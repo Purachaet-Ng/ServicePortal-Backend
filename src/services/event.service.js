@@ -130,7 +130,10 @@ export const closeEvent = async (eventId, eventFieldsToUpdate) => {
       select: eventSelect,
     }),
     prisma.eventAttendee.updateMany({
-      where: { eventId, rsvpStatus: "ACCEPTED" },
+      where: {
+        eventId,
+        rsvpStatus: { in: ["INVITED", "ACCEPTED"] },
+      },
       data: { rsvpStatus: "ABSENT" },
     }),
   ]);
@@ -138,12 +141,16 @@ export const closeEvent = async (eventId, eventFieldsToUpdate) => {
   return event;
 };
 
-/** Counts staff allowed to join the event. */
-export const countInvitableUsers = async (userIds, departmentId) => {
+/** Counts users allowed to join the event. */
+export const countInvitableUsers = async (
+  userIds,
+  departmentId,
+  allowedRoles,
+) => {
   return await prisma.user.count({
     where: {
       id: { in: userIds },
-      role: "STAFF",
+      role: { in: allowedRoles },
       ...(departmentId === undefined ? {} : { departmentId }),
     },
   });

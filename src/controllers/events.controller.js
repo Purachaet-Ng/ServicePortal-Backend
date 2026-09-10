@@ -278,7 +278,15 @@ export async function addAttendees(req, res, next) {
 
     const departmentId =
       req.user.role === "ADMIN_DEPT" ? req.user.departmentId : undefined;
-    const allowedCount = await countInvitableUsers(userIds, departmentId);
+    const allowedRoles =
+      req.user.role === "ADMIN_SYSTEM"
+        ? ["ADMIN_DEPT", "STAFF"]
+        : ["STAFF"];
+    const allowedCount = await countInvitableUsers(
+      userIds,
+      departmentId,
+      allowedRoles,
+    );
 
     if (allowedCount !== userIds.length) {
       throw createHttpError(400, "Some users cannot be invited");
