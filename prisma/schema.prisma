@@ -272,6 +272,7 @@ model Event {
   id          Int         @id @default(autoincrement())
   title       String
   description String?
+  location    String?
   startTime   DateTime    @map("start_time")
   endTime     DateTime    @map("end_time")
   organizerId Int         @map("organizer_id")

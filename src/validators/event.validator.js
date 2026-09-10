@@ -33,6 +33,15 @@ export const updateEventSchema = eventSchema
   })
   .refine(
     (data) =>
+      data.status === undefined ||
+      ["LIVE", "CLOSED"].includes(data.status),
+    {
+      message: "status must be LIVE or CLOSED",
+      path: ["status"],
+    },
+  )
+  .refine(
+    (data) =>
       data.startTime === undefined ||
       data.endTime === undefined ||
       data.endTime > data.startTime,
@@ -46,9 +55,20 @@ export const updateEventStatusSchema = z.object({
   status: eventStatus,
 });
 
+/** Staff answer invitations here; check-in and event closure own attendance states. */
 export const updateRsvpSchema = z.object({
-  rsvpStatus: z.enum(["ACCEPTED", "DECLINED", "ATTENDED", "ABSENT"]),
+  rsvpStatus: z.enum(["ACCEPTED", "DECLINED"]),
 });
+
+/** A QR scan supplies a token; an authorized manual check-in supplies a userId. */
+export const checkInSchema = z
+  .object({
+    token: z.string().trim().min(1).optional(),
+    userId: positiveId("Invalid userId").optional(),
+  })
+  .refine((data) => Boolean(data.token) !== Boolean(data.userId), {
+    message: "Provide either token or userId",
+  });
 
 /** GET /events filters. Absent means "no bound", not "now". */
 export const listEventsQuery = z.object({
@@ -58,5 +78,9 @@ export const listEventsQuery = z.object({
 });
 
 export const inviteAttendeesSchema = z.object({
-  userIds: z.array(positiveId("Invalid userId")).min(1, "userIds must not be empty"),
+  userIds: z.array(positiveId("Invalid userId"))
+  .min(1, "userIds must not be empty")
+  .refine((id) => new Set(id).size === id.length, {
+    message: "userIds must not contain duplicates",
+  } )
 });
