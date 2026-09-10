@@ -65,6 +65,7 @@ enum InventoryRequestStatus {
 
 enum InventoryAssetStatus {
   AVAILABLE
+  IN_TRANSIT
   ASSIGNED
   MAINTENANCE
   RETIRED
@@ -82,12 +83,13 @@ enum StockMovementType {
 // ---------------- Shared tables ----------------
 
 model Department {
-  id                Int                @id @default(autoincrement())
-  name              String             @unique
+  id                Int                      @id @default(autoincrement())
+  name              String                   @unique
   users             User[]
   requestTypes      RequestType[]
   inventoryStocks   DepartmentStock[]
   inventoryRequests InventoryRequest[]
+  replenishments    InventoryReplenishment[]
 
   @@map("departments")
 }
@@ -103,19 +105,22 @@ model User {
   departmentId Int?        @map("department_id")
   department   Department? @relation(fields: [departmentId], references: [id])
 
-  createdTickets            Ticket[]           @relation("TicketCreatedBy")
-  assignedTickets           Ticket[]           @relation("TicketAssignedTo")
+  createdTickets            Ticket[]                 @relation("TicketCreatedBy")
+  assignedTickets           Ticket[]                 @relation("TicketAssignedTo")
   comments                  Comment[]
   notifications             Notification[]
   roomBookings              RoomBooking[]
   carBookings               CarBooking[]
   organizedEvents           Event[]
-  eventAttendance           EventAttendee[] @relation("EventAttendeeUser")
-  eventCheckins             EventAttendee[] @relation("EventCheckinBy")
-  inventoryRequests         InventoryRequest[] @relation("InventoryRequester")
-  reviewedInventoryRequests InventoryRequest[] @relation("InventoryReviewer")
+  eventAttendance           EventAttendee[]          @relation("EventAttendeeUser")
+  eventCheckins             EventAttendee[]          @relation("EventCheckinBy")
+  inventoryRequests         InventoryRequest[]       @relation("InventoryRequester")
+  reviewedInventoryRequests InventoryRequest[]       @relation("InventoryReviewer")
   stockMovements            StockMovement[]
   assetAssignments          AssetAssignment[]
+  requestedReplenishments   InventoryReplenishment[] @relation("ReplenishmentRequester")
+  reviewedReplenishments    InventoryReplenishment[] @relation("ReplenishmentReviewer")
+  receivedReplenishments    InventoryReplenishment[] @relation("ReplenishmentReceiver")
   uploadedAttachments       Attachment[]
 
   // Reservations this user approved or rejected, as an admin.
@@ -284,14 +289,14 @@ model Event {
 }
 
 model EventAttendee {
-  eventId    Int                 @map("event_id")
-  event      Event               @relation(fields: [eventId], references: [id])
-  userId     Int                 @map("user_id")
-  user       User                @relation("EventAttendeeUser", fields: [userId], references: [id])
-  rsvpStatus EventAttendeeStatus @default(INVITED) @map("rsvp_status")
-  checkedInAt   DateTime?        @map("checked_in_at")
-  checkedInById Int?             @map("checked_in_by_id")
-  checkedInBy   User?            @relation("EventCheckinBy", fields: [checkedInById], references: [id])
+  eventId       Int                 @map("event_id")
+  event         Event               @relation(fields: [eventId], references: [id])
+  userId        Int                 @map("user_id")
+  user          User                @relation("EventAttendeeUser", fields: [userId], references: [id])
+  rsvpStatus    EventAttendeeStatus @default(INVITED) @map("rsvp_status")
+  checkedInAt   DateTime?           @map("checked_in_at")
+  checkedInById Int?                @map("checked_in_by_id")
+  checkedInBy   User?               @relation("EventCheckinBy", fields: [checkedInById], references: [id])
 
   @@id([eventId, userId])
   @@map("event_attendees")
@@ -344,8 +349,9 @@ model InventoryItem {
 
 model DepartmentStock {
   id           Int           @id @default(autoincrement())
-  departmentId Int           @map("department_id")
-  department   Department    @relation(fields: [departmentId], references: [id])
+  // NULL identifies System Admin stock, which supplies department stocks.
+  departmentId Int?          @map("department_id")
+  department   Department?   @relation(fields: [departmentId], references: [id], onDelete: Restrict)
   itemId       Int           @map("item_id")
   item         InventoryItem @relation(fields: [itemId], references: [id])
   onHand       Int           @default(0) @map("on_hand")
@@ -355,9 +361,10 @@ model DepartmentStock {
   createdAt    DateTime      @default(now()) @map("created_at")
   updatedAt    DateTime      @updatedAt @map("updated_at")
 
-  assets       InventoryAsset[]
-  requestLines InventoryRequestLine[]
-  movements    StockMovement[]
+  assets         InventoryAsset[]
+  requestLines   InventoryRequestLine[]
+  movements      StockMovement[]
+  replenishments InventoryReplenishment[]
 
   @@unique([departmentId, itemId])
   @@index([departmentId, isActive])
@@ -375,8 +382,9 @@ model InventoryAsset {
   createdAt DateTime             @default(now()) @map("created_at")
   updatedAt DateTime             @updatedAt @map("updated_at")
 
-  requestLines InventoryRequestLine[]
-  assignments  AssetAssignment[]
+  requestLines   InventoryRequestLine[]
+  assignments    AssetAssignment[]
+  replenishments ReplenishmentAsset[]
 
   @@index([stockId, status])
   @@map("inventory_assets")
@@ -442,20 +450,70 @@ model AssetAssignment {
 }
 
 model StockMovement {
-  id            Int                   @id @default(autoincrement())
-  stockId       Int                   @map("stock_id")
-  stock         DepartmentStock       @relation(fields: [stockId], references: [id])
-  requestLineId Int?                  @map("request_line_id")
-  requestLine   InventoryRequestLine? @relation(fields: [requestLineId], references: [id])
-  actorId       Int                   @map("actor_id")
-  actor         User                  @relation(fields: [actorId], references: [id])
-  type          StockMovementType
-  onHandDelta   Int                   @default(0) @map("on_hand_delta")
-  reservedDelta Int                   @default(0) @map("reserved_delta")
-  note          String?
-  createdAt     DateTime              @default(now()) @map("created_at")
+  id              Int                     @id @default(autoincrement())
+  stockId         Int                     @map("stock_id")
+  stock           DepartmentStock         @relation(fields: [stockId], references: [id])
+  requestLineId   Int?                    @map("request_line_id")
+  requestLine     InventoryRequestLine?   @relation(fields: [requestLineId], references: [id])
+  actorId         Int                     @map("actor_id")
+  actor           User                    @relation(fields: [actorId], references: [id])
+  type            StockMovementType
+  onHandDelta     Int                     @default(0) @map("on_hand_delta")
+  reservedDelta   Int                     @default(0) @map("reserved_delta")
+  note            String?
+  createdAt       DateTime                @default(now()) @map("created_at")
+  replenishmentId Int?                    @map("replenishment_id")
+  replenishment   InventoryReplenishment? @relation(fields: [replenishmentId], references: [id])
 
   @@index([stockId, createdAt])
   @@index([requestLineId])
   @@map("stock_movements")
+}
+
+enum ReplenishmentStatus {
+  PENDING
+  APPROVED
+  DISPATCHED
+  RECEIVED
+  REJECTED
+  CANCELLED
+}
+
+model InventoryReplenishment {
+  id            Int                  @id @default(autoincrement())
+  sourceStockId Int                  @map("source_stock_id")
+  sourceStock   DepartmentStock      @relation(fields: [sourceStockId], references: [id])
+  departmentId  Int                  @map("department_id")
+  department    Department           @relation(fields: [departmentId], references: [id])
+  requesterId   Int                  @map("requester_id")
+  requester     User                 @relation("ReplenishmentRequester", fields: [requesterId], references: [id])
+  quantity      Int
+  reason        String
+  status        ReplenishmentStatus  @default(PENDING)
+  reviewedById  Int?                 @map("reviewed_by_id")
+  reviewedBy    User?                @relation("ReplenishmentReviewer", fields: [reviewedById], references: [id])
+  receivedById  Int?                 @map("received_by_id")
+  receivedBy    User?                @relation("ReplenishmentReceiver", fields: [receivedById], references: [id])
+  decisionNote  String?              @map("decision_note")
+  reviewedAt    DateTime?            @map("reviewed_at")
+  dispatchedAt  DateTime?            @map("dispatched_at")
+  receivedAt    DateTime?            @map("received_at")
+  createdAt     DateTime             @default(now()) @map("created_at")
+  updatedAt     DateTime             @updatedAt @map("updated_at")
+  assets        ReplenishmentAsset[]
+  movements     StockMovement[]
+
+  @@index([departmentId, status])
+  @@index([sourceStockId, status])
+  @@map("inventory_replenishments")
+}
+
+model ReplenishmentAsset {
+  replenishmentId Int                    @map("replenishment_id")
+  replenishment   InventoryReplenishment @relation(fields: [replenishmentId], references: [id])
+  assetId         Int                    @map("asset_id")
+  asset           InventoryAsset         @relation(fields: [assetId], references: [id])
+
+  @@id([replenishmentId, assetId])
+  @@map("replenishment_assets")
 }

@@ -11,13 +11,11 @@ import bcrypt from "bcrypt";
 
 export async function listUsers(req, res, next) {
   try {
-    let where = {}
-
-    const {users , meta} = await findUsers(req.user,req.valid.query);
+    const { users, meta } = await findUsers(req.user, req.valid.query);
 
     return res.status(200).json({
-      data:users,
-      meta
+      data: users,
+      meta,
     });
   } catch (error) {
     next(error);
@@ -32,9 +30,15 @@ export async function getUser(req, res, next) {
     if (!foundUser) {
       throw createHttpError(404, "User not found");
     }
-
-    if(req.user.role === "ADMIN_DEPT" && foundUser.departmentId !== req.user.departmentId ){
-      throw createHttpError(403, "Forbidden");
+    if (
+      req.user.role === "ADMIN_DEPT" &&
+      (foundUser.role !== "STAFF" ||
+        foundUser.departmentId !== req.user.departmentId)
+    ) {
+      throw createHttpError(
+        403,
+        "Department admins can only access staff in their department",
+      );
     }
 
     return res.status(200).json({
@@ -53,6 +57,26 @@ export async function updateUser(req, res, next) {
 
     if (!userToUpdate) {
       throw createHttpError(404, "User not found");
+    }
+    if (req.user.role === "ADMIN_DEPT") {
+      if (
+        userToUpdate.role !== "STAFF" ||
+        userToUpdate.departmentId !== req.user.departmentId
+      ) {
+        throw createHttpError(
+          403,
+          "Department admins can only update staff in their department",
+        );
+      }
+      if (
+        userFieldsToUpdate.departmentId !== undefined &&
+        userFieldsToUpdate.departmentId !== req.user.departmentId
+      ) {
+        throw createHttpError(
+          403,
+          "Department admins cannot move users to another department",
+        );
+      }
     }
 
     const updatedUser = await updateUserById(userId, userFieldsToUpdate);
@@ -139,18 +163,20 @@ export async function deleteUser(req, res, next) {
   }
 }
 
-export async function getAssignableUser(req,res,next) {
+export async function getAssignableUser(req, res, next) {
   try {
-    const departmentId = req.valid.query.department_id
-    console.log(typeof departmentId)
-
-    const { users } = await findUsers(req.user, {departmentId})
+    const departmentId = req.valid.query.department_id;
+    const { users } = await findUsers(req.user, {
+      departmentId,
+      role: "STAFF",
+      page: 1,
+      limit: 100,
+      skip: 0,
+    });
     res.status(200).json({
-      user: users
-    })
-    console.log('users', users)
+      user: users,
+    });
   } catch (error) {
-    next(error)
-    
+    next(error);
   }
 }
