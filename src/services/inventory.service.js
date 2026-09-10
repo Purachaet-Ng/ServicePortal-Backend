@@ -703,7 +703,7 @@ export async function createInventoryRequest(data, user) {
       include: requestInclude,
     });
     const approverWhere =
-      user.role === "STAFF"
+      requester.role === "STAFF"
         ? {
             OR: [
               { role: "ADMIN_SYSTEM" },

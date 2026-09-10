@@ -350,6 +350,10 @@ model InventoryItem {
 model DepartmentStock {
   id           Int           @id @default(autoincrement())
   // NULL identifies System Admin stock, which supplies department stocks.
+  // The partial unique index department_stocks_central_item_key is managed by
+  // the inventory replenishment SQL migration; Prisma cannot declare it here.
+  // Do not replace migrations with prisma db push or central stock uniqueness
+  // and receiveCentralStock's ON CONFLICT target will be lost.
   departmentId Int?          @map("department_id")
   department   Department?   @relation(fields: [departmentId], references: [id], onDelete: Restrict)
   itemId       Int           @map("item_id")
