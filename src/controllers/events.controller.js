@@ -8,6 +8,7 @@ import {
   findAttendeeByEventAndUser,
   findAttendeesByEventId,
   findEventById,
+  findInvitableUsers,
   inviteAttendees,
   updateEventById,
   upsertRsvp,
@@ -72,6 +73,16 @@ export async function getEvent(req, res, next) {
   }
 }
 
+export async function listEventInvitees(req, res, next) {
+  try {
+    const users = await findInvitableUsers(req.valid.query.department_id);
+
+    return res.status(200).json({ users });
+  } catch (error) {
+    next(error);
+  }
+}
+
 export async function createEventByAdmin(req, res, next) {
   try {
     // The logged-in admin is the organizer.
@@ -80,8 +91,18 @@ export async function createEventByAdmin(req, res, next) {
       organizerId: req.user.id,
     });
 
+    if (!event) {
+      throw createHttpError(400, "Some users cannot be invited");
+    }
+
+    await notifyEventInvited({
+      event,
+      userIds: req.valid.body.userIds,
+      actorId: req.user.id,
+    });
+
     return res.status(201).json({
-      message: "Event created successfully",
+      message: "Event created and attendees invited",
       event,
     });
   } catch (error) {
@@ -100,6 +121,13 @@ export async function updateEvent(req, res, next) {
 
     if (status === "LIVE" && eventToUpdate.status !== "PENDING") {
       throw createHttpError(409, "Only a pending event can go live");
+    }
+
+    if (status === "LIVE" && eventToUpdate.startTime > new Date()) {
+      throw createHttpError(
+        409,
+        "Event cannot start before its scheduled start time",
+      );
     }
 
     if (status === "CLOSED" && eventToUpdate.status !== "LIVE") {
@@ -278,17 +306,7 @@ export async function addAttendees(req, res, next) {
       throw createHttpError(409, "Invitations are closed");
     }
 
-    const departmentId =
-      req.user.role === "ADMIN_DEPT" ? req.user.departmentId : undefined;
-    const allowedRoles =
-      req.user.role === "ADMIN_SYSTEM"
-        ? ["ADMIN_DEPT", "STAFF"]
-        : ["STAFF"];
-    const allowedCount = await countInvitableUsers(
-      userIds,
-      departmentId,
-      allowedRoles,
-    );
+    const allowedCount = await countInvitableUsers(userIds);
 
     if (allowedCount !== userIds.length) {
       throw createHttpError(400, "Some users cannot be invited");
