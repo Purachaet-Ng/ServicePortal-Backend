@@ -32,7 +32,7 @@ export const registerSchema = z.object({
   phone,
   email,
   password,
-  departmentId: positiveId("Invalid department id").nullish(),
+  departmentId: positiveId("Department is required"),
 });
 
 export const loginSchema = z.object({

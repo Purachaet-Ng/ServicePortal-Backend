@@ -21,9 +21,11 @@ import {
 
 const router = Router();
 
-router.use(authenticate);
-
+// Registration needs this public, read-only list. The service exposes only id
+// and name; every department detail or mutation route remains authenticated.
 router.get("/", listDepartments);
+
+router.use(authenticate);
 
 router.get(
   "/:deptId/request-types",
