@@ -4,6 +4,7 @@ import {
   closeEvent,
   countInvitableUsers,
   createEvent,
+  deleteEventById,
   findAllEvents,
   findAttendeeByEventAndUser,
   findAttendeesByEventId,
@@ -164,6 +165,23 @@ export async function cancelEvent(req, res, next) {
 
     return res.status(200).json({
       message: "Event cancelled successfully",
+      event,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/** Permanently deletes an event. Route access is limited to system admins. */
+export async function deleteEvent(req, res, next) {
+  try {
+    const eventId = req.valid.params.id;
+
+    await loadEvent(eventId);
+    const event = await deleteEventById(eventId);
+
+    return res.status(200).json({
+      message: "Event deleted successfully",
       event,
     });
   } catch (error) {

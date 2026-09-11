@@ -128,6 +128,16 @@ export const updateEventById = async (eventId, eventFieldsToUpdate) => {
   });
 };
 
+/** Permanently deletes the event and its invitations. */
+export const deleteEventById = async (eventId) => {
+  const [, event] = await prisma.$transaction([
+    prisma.eventAttendee.deleteMany({ where: { eventId } }),
+    prisma.event.delete({ where: { id: eventId }, select: eventSelect }),
+  ]);
+
+  return event;
+};
+
 export const findAttendeesByEventId = async (eventId) => {
   return await prisma.eventAttendee.findMany({
     where: { eventId },
