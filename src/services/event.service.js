@@ -4,6 +4,7 @@ const eventSelect = {
   id: true,
   title: true,
   description: true,
+  location: true,
   startTime: true,
   endTime: true,
   status: true,
@@ -24,7 +25,12 @@ export const findAllEvents = async ({ from, to, status }, staffId) => {
     where: {
       ...(status ? { status } : {}),
       ...(from || to
-        ? { startTime: { ...(from ? { gte: from } : {}), ...(to ? { lte: to } : {}) } }
+        ? {
+            startTime: {
+              ...(from ? { gte: from } : {}),
+              ...(to ? { lte: to } : {}),
+            },
+          }
         : {}),
       ...(staffId ? { attendees: { some: { userId: staffId } } } : {}),
     },
@@ -50,11 +56,23 @@ export const findAllEvents = async ({ from, to, status }, staffId) => {
   }));
 };
 
-/** Returns one event with its attendees. */
-export const findEventById = async (eventId) => {
+/** Returns one event with optionally department-scoped attendees. */
+export const findEventById = async (eventId, attendeeDepartmentId) => {
   return await prisma.event.findUnique({
     where: { id: eventId },
-    select: { ...eventSelect, attendees: { select: attendeeSelect } },
+    select: {
+      ...eventSelect,
+      attendees: {
+        ...(attendeeDepartmentId === undefined
+          ? {}
+          : {
+              where: {
+                user: { is: { departmentId: attendeeDepartmentId } },
+              },
+            }),
+        select: attendeeSelect,
+      },
+    },
   });
 };
 
