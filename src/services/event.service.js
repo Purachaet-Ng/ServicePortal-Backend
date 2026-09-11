@@ -1,5 +1,7 @@
 import { prisma } from "../lib/prisma.js";
 
+const INVITEE_ROLES = ["ADMIN_DEPT", "STAFF"];
+
 const eventSelect = {
   id: true,
   title: true,
@@ -76,8 +78,46 @@ export const findEventById = async (eventId, attendeeDepartmentId) => {
   });
 };
 
-export const createEvent = async (eventData) => {
-  return await prisma.event.create({ data: eventData, select: eventSelect });
+export const createEvent = async ({ userIds, ...eventData }) => {
+  return await prisma.$transaction(async (tx) => {
+    const allowedCount = await tx.user.count({
+      where: {
+        id: { in: userIds },
+        role: { in: INVITEE_ROLES },
+      },
+    });
+
+    if (allowedCount !== userIds.length) return null;
+
+    return await tx.event.create({
+      data: {
+        ...eventData,
+        attendees: {
+          create: userIds.map((userId) => ({ userId })),
+        },
+      },
+      select: eventSelect,
+    });
+  });
+};
+
+/** Lists valid event recipients in one department. */
+export const findInvitableUsers = async (departmentId) => {
+  return await prisma.user.findMany({
+    where: {
+      departmentId,
+      role: { in: INVITEE_ROLES },
+    },
+    select: {
+      id: true,
+      firstname: true,
+      lastname: true,
+      email: true,
+      role: true,
+      departmentId: true,
+    },
+    orderBy: [{ firstname: "asc" }, { lastname: "asc" }],
+  });
 };
 
 export const updateEventById = async (eventId, eventFieldsToUpdate) => {
@@ -160,16 +200,11 @@ export const closeEvent = async (eventId, eventFieldsToUpdate) => {
 };
 
 /** Counts users allowed to join the event. */
-export const countInvitableUsers = async (
-  userIds,
-  departmentId,
-  allowedRoles,
-) => {
+export const countInvitableUsers = async (userIds) => {
   return await prisma.user.count({
     where: {
       id: { in: userIds },
-      role: { in: allowedRoles },
-      ...(departmentId === undefined ? {} : { departmentId }),
+      role: { in: INVITEE_ROLES },
     },
   });
 };
