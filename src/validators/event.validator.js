@@ -13,6 +13,7 @@ const eventStatus = z.enum([
 export const eventSchema = z.object({
   title: requiredText("title"),
   description: z.string().trim().nullish(),
+  location: z.string().trim().max(255).nullish(),
   status: eventStatus.optional(),
   startTime: requiredDate("startTime"),
   endTime: requiredDate("endTime"),

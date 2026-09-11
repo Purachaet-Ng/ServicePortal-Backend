@@ -22,8 +22,8 @@ const assertCanManage = (event, user) => {
   }
 };
 
-const loadEvent = async (eventId) => {
-  const event = await findEventById(eventId);
+const loadEvent = async (eventId, attendeeDepartmentId) => {
+  const event = await findEventById(eventId, attendeeDepartmentId);
 
   if (!event) {
     throw createHttpError(404, "Event not found");
@@ -45,7 +45,9 @@ export async function listEvents(req, res, next) {
 
 export async function getEvent(req, res, next) {
   try {
-    const event = await loadEvent(req.valid.params.id);
+    const attendeeDepartmentId =
+      req.user.role === "ADMIN_DEPT" ? req.user.departmentId : undefined;
+    const event = await loadEvent(req.valid.params.id, attendeeDepartmentId);
 
     if (req.user.role === "STAFF") {
       const attendee = event.attendees.find(
