@@ -37,9 +37,34 @@ const CODE_BY_STATUS = {
  * Node ("ECONNREFUSED") also populate `err.code`, and leaking those would tell
  * a caller which database we run.
  */
-const isOwnCode = (code) => typeof code === "string" && /^[A-Z][A-Z_]*$/.test(code);
+const isOwnCode = (code) =>
+  typeof code === "string" && /^[A-Z][A-Z_]*$/.test(code);
 
 export function errorHandler(err, req, res, next) {
+  if (err?.code === "P2002") {
+    return res.status(409).json({
+      error: { code: "CONFLICT", message: "ข้อมูลนี้มีอยู่ในระบบแล้ว" },
+    });
+  }
+
+  if (err?.code === "P2003") {
+    return res.status(422).json({
+      error: {
+        code: "INVALID_REFERENCE",
+        message: "ไม่พบข้อมูลอ้างอิงที่เลือก",
+      },
+    });
+  }
+
+  if (err?.code === "P2034") {
+    return res.status(409).json({
+      error: {
+        code: "CONCURRENT_UPDATE",
+        message: "ข้อมูลถูกเปลี่ยนพร้อมกัน กรุณาลองใหม่",
+      },
+    });
+  }
+
   const status = Number(err.status ?? err.statusCode) || 500;
 
   // A 5xx is a bug, not a message to the user: log the real thing, return
@@ -60,7 +85,9 @@ export function errorHandler(err, req, res, next) {
 
   res.status(status).json({
     error: {
-      code: isOwnCode(err.code) ? err.code : (CODE_BY_STATUS[status] ?? "ERROR"),
+      code: isOwnCode(err.code)
+        ? err.code
+        : (CODE_BY_STATUS[status] ?? "ERROR"),
       message: err.message || "Request failed",
       ...(Array.isArray(details) && details.length ? { details } : {}),
     },

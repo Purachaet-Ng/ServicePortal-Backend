@@ -54,6 +54,9 @@ export const findDepartmentUsageById = async (departmentId) => {
         select: {
           users: true,
           requestTypes: true,
+          inventoryStocks: true,
+          inventoryRequests: true,
+          replenishments: true,
         },
       },
     },

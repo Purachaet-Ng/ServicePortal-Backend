@@ -114,7 +114,10 @@ export async function deleteDepartment(req, res, next) {
 
     if (
       departmentToDelete._count.users > 0 ||
-      departmentToDelete._count.requestTypes > 0
+      departmentToDelete._count.requestTypes > 0 ||
+      departmentToDelete._count.inventoryStocks > 0 ||
+      departmentToDelete._count.inventoryRequests > 0 ||
+      departmentToDelete._count.replenishments > 0
     ) {
       throw createHttpError(
         409,

@@ -37,6 +37,10 @@ export const createUserSchema = z.object({
   departmentId,
   // Omitted means the database default (STAFF) applies.
   role: role.optional(),
+}).superRefine((data, context) => {
+  if ((data.role ?? "STAFF") !== "ADMIN_SYSTEM" && !data.departmentId) {
+    context.addIssue({ code: "custom", path: ["departmentId"], message: "Department is required for staff and department admins" });
+  }
 });
 
 export const updateUserSchema = z

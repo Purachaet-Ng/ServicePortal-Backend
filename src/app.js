@@ -11,6 +11,8 @@ import { errorHandler } from "./middlewares/errorHandler.js";
 import departmentRouter from "./routes/departments.route.js";
 import notificationsRouter from "./routes/notifications.route.js";
 import eventsRouter from "./routes/events.route.js";
+import inventoryRouter from "./routes/inventory.route.js";
+
 
 const app = express();
 
@@ -44,7 +46,8 @@ app.use(`${API}/notifications`, notificationsRouter);
 
 app.use(`${API}/events`, eventsRouter);
 
-// app.use("/inventories"); optional
+app.use(`${API}/inventory`, inventoryRouter);
+
 
 // app.use(validater); all route
 
