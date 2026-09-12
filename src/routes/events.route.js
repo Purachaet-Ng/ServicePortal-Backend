@@ -16,6 +16,7 @@ import {
   cancelEvent,
   checkInEvent,
   createEventByAdmin,
+  deleteEvent,
   getEvent,
   getEventQr,
   listAttendees,
@@ -54,7 +55,14 @@ router.patch(
   updateEvent,
 );
 
-router.delete("/:id", validate({ params: idParams }), cancelEvent);
+router.patch("/:id/cancel", validate({ params: idParams }), cancelEvent);
+
+router.delete(
+  "/:id",
+  authorize("ADMIN_SYSTEM"),
+  validate({ params: idParams }),
+  deleteEvent,
+);
 
 router.get("/:id/attendees", validate({ params: idParams }), listAttendees);
 
