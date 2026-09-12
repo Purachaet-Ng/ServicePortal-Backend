@@ -104,7 +104,7 @@ const ADMINS = ["ADMIN_DEPT", "ADMIN_SYSTEM"];
 
 const TRANSITIONS = {
   SUBMITTED: {
-    UNDER_REVIEW: { roles: ADMINS },
+    UNDER_REVIEW: { roles: ADMINS, orAssignee: true },
     REJECTED: { roles: ADMINS },
   },
   UNDER_REVIEW: {
@@ -204,7 +204,10 @@ export async function deleteTicket(ticketId, user) {
 export async function findTicketById(ticketId, user) {
   const ticket = await prisma.ticket.findFirst({
     where: { AND: [{ id: ticketId }, roleCondition(user)] },
-    include: { requestType: true, attachments: { select: attachmentSelect } },
+    // Same shape as every other ticket response, except requestType comes back
+    // whole: the detail page renders the custom fields from its formSchema,
+    // which the narrowed select in ticketInclude drops.
+    include: { ...ticketInclude, requestType: true },
   });
 
   if (ticket) return ticket;
