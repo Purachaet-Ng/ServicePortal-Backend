@@ -5,6 +5,7 @@ import { idParams } from "../validators/common.validator.js";
 import {
   checkInSchema,
   createEventSchema,
+  eventInviteesQuery,
   inviteAttendeesSchema,
   listEventsQuery,
   updateEventSchema,
@@ -18,6 +19,7 @@ import {
   getEvent,
   getEventQr,
   listAttendees,
+  listEventInvitees,
   listEvents,
   setRsvp,
   updateEvent,
@@ -28,6 +30,13 @@ const router = Router();
 router.use(authenticate);
 
 router.get("/", validate({ query: listEventsQuery }), listEvents);
+
+router.get(
+  "/invitees",
+  authorize("ADMIN_DEPT", "ADMIN_SYSTEM"),
+  validate({ query: eventInviteesQuery }),
+  listEventInvitees,
+);
 
 router.get("/:id", validate({ params: idParams }), getEvent);
 
@@ -66,6 +75,7 @@ router.post(
 
 router.post(
   "/:id/attendees",
+  authorize("ADMIN_DEPT", "ADMIN_SYSTEM"),
   validate({ params: idParams, body: inviteAttendeesSchema }),
   addAttendees,
 );

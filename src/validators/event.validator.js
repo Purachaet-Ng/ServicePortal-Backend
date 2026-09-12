@@ -19,13 +19,19 @@ export const eventSchema = z.object({
   endTime: requiredDate("endTime"),
 });
 
-export const createEventSchema = eventSchema.refine(
-  (data) => data.endTime > data.startTime,
-  {
+const inviteeIds = z
+  .array(positiveId("Invalid userId"))
+  .min(1, "userIds must not be empty")
+  .refine((ids) => new Set(ids).size === ids.length, {
+    message: "userIds must not contain duplicates",
+  });
+
+export const createEventSchema = eventSchema
+  .extend({ userIds: inviteeIds })
+  .refine((data) => data.endTime > data.startTime, {
     message: "endTime must be after startTime",
     path: ["endTime"],
-  },
-);
+  });
 
 export const updateEventSchema = eventSchema
   .partial()
@@ -78,10 +84,10 @@ export const listEventsQuery = z.object({
   status: eventStatus.optional(),
 });
 
+export const eventInviteesQuery = z.object({
+  department_id: positiveId("Invalid department id"),
+});
+
 export const inviteAttendeesSchema = z.object({
-  userIds: z.array(positiveId("Invalid userId"))
-  .min(1, "userIds must not be empty")
-  .refine((id) => new Set(id).size === id.length, {
-    message: "userIds must not contain duplicates",
-  } )
+  userIds: inviteeIds,
 });
