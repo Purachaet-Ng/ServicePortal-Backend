@@ -19,10 +19,10 @@ function roleCondition(user) {
     case "ADMIN_SYSTEM":
       return {};
     case "ADMIN_DEPT":
-      return {
-        departmentId: user.departmentId ?? -1,
-        role: "STAFF",
-      };
+      // Every member of their own department, admins included. The per-row
+      // gates in users.controller.js still hold GET /users/:id and PATCH to
+      // STAFF only — listing a co-admin is not the same as editing one.
+      return { departmentId: user.departmentId ?? -1 };
     default:
       throw createHttpError(403, "Forbidden");
   }
