@@ -110,17 +110,30 @@ async function createTicketIfMissing({ title, ...rest }) {
   const existing = await prisma.ticket.findFirst({ where: { title } });
 
   if (existing) {
-    // createdAt is the ONE field corrected on an existing ticket, and only
-    // because the rule above is about status: what a re-seed must not undo is
-    // work someone did while testing. Nobody edits a creation date by hand, and
-    // leaving it alone defeats the point of declaring one — every ticket seeded
-    // before these dates existed reads as minutes old, so the Age column shows
-    // thirty-nine identical values and the list looks like a batch import.
+    // createdAt and customFields are the ONLY fields corrected on an existing
+    // ticket, and only because the rule above is about status: what a re-seed
+    // must not undo is work someone did while testing. Nobody edits a creation
+    // date by hand, and leaving it alone defeats the point of declaring one —
+    // every ticket seeded before these dates existed reads as minutes old, so
+    // the Age column shows thirty-nine identical values and the list looks like
+    // a batch import.
+    //
+    // customFields rides along for the same reason: the date fields inside it
+    // are written relative to today by day(), so a payload frozen at whatever
+    // the calendar said on the first run puts leave in April and a launch date
+    // six months behind the ticket that requests it.
+    const data = {};
     if (rest.createdAt && existing.createdAt.getTime() !== rest.createdAt.getTime()) {
-      const ticket = await prisma.ticket.update({
-        where: { id: existing.id },
-        data: { createdAt: rest.createdAt },
-      });
+      data.createdAt = rest.createdAt;
+    }
+    if (
+      rest.customFields &&
+      JSON.stringify(existing.customFields) !== JSON.stringify(rest.customFields)
+    ) {
+      data.customFields = rest.customFields;
+    }
+    if (Object.keys(data).length) {
+      const ticket = await prisma.ticket.update({ where: { id: existing.id }, data });
       return { ticket, created: false };
     }
     return { ticket: existing, created: false };
@@ -258,12 +271,22 @@ async function syncReserved(stocks) {
   }
 }
 
-/** inventory_assets.serial_no is @unique — the serial is the key. */
-const upsertAsset = ({ serialNo, ...rest }) =>
+/**
+ * inventory_assets.serial_no is @unique — the serial is the key.
+ *
+ * `stockId` and `status` are seeded ONCE and never re-applied. They are live
+ * state: issuing, returning and receiving a replenishment all move an asset
+ * between stocks, and replaying the literals here drags it back to where the
+ * seed first put it while the balances it moved with stay put. That is what
+ * parked MN-C-0003 at central as IN_TRANSIT while HR still carried the onHand
+ * it was received into — assertInventoryConsistent then failed the seed on
+ * drift this helper had just caused. Descriptive fields are still refreshed.
+ */
+const upsertAsset = ({ serialNo, stockId, status, ...rest }) =>
   prisma.inventoryAsset.upsert({
     where: { serialNo },
     update: rest,
-    create: { serialNo, ...rest },
+    create: { serialNo, stockId, status, ...rest },
   });
 
 /**
@@ -371,6 +394,11 @@ function at(daysFromToday, hour, minute = 0) {
   date.setDate(date.getDate() + daysFromToday);
   date.setHours(hour, minute, 0, 0);
   return date;
+}
+
+/** Same clock as at(), formatted as the YYYY-MM-DD string a date field holds. */
+function day(daysFromToday) {
+  return at(daysFromToday, 12).toLocaleDateString("en-CA");
 }
 
 // ---------------------------------------------------------------------------
@@ -1139,7 +1167,7 @@ async function main() {
         hiring_department: "Marketing",
         openings: 2,
         hiring_manager: nid.id,
-        target_start_date: "2026-10-01",
+        target_start_date: day(10),
         job_description: "Own campaign delivery for the APAC region.",
       },
     },
@@ -1154,7 +1182,7 @@ async function main() {
       assignedToId: nid.id,
       customFields: {
         course_name: "Advanced Excel for Finance",
-        preferred_date: "2026-09-22",
+        preferred_date: day(1),
         attendees: 12,
         location_preference: "On-site",
       },
@@ -1186,7 +1214,7 @@ async function main() {
       assignedToId: nid.id,
       customFields: {
         course_name: "Leadership Coaching",
-        preferred_date: "2026-11-10",
+        preferred_date: day(50),
         attendees: 8,
         location_preference: "Off-site",
       },
@@ -1205,7 +1233,7 @@ async function main() {
         hiring_department: "Engineering",
         openings: 1,
         hiring_manager: anucha.id,
-        target_start_date: "2026-09-30",
+        target_start_date: day(9),
       },
     },
     {
@@ -1219,7 +1247,7 @@ async function main() {
       assignedToId: nid.id,
       customFields: {
         course_name: "First Aid Level 2",
-        preferred_date: "2026-09-05",
+        preferred_date: day(-16),
         attendees: 15,
         location_preference: "On-site",
       },
@@ -1313,8 +1341,8 @@ async function main() {
       createdAt: at(-3, 9, 20),
       customFields: {
         leave_type: "Annual",
-        start_date: "2026-04-12",
-        end_date: "2026-04-16",
+        start_date: day(203),
+        end_date: day(207),
         days: 5,
         handover_to: staff.wanida.id,
         reason: "Family trip, booked last year.",
@@ -1331,8 +1359,8 @@ async function main() {
       createdAt: at(-24, 8, 5),
       customFields: {
         leave_type: "Sick",
-        start_date: "2026-08-18",
-        end_date: "2026-08-19",
+        start_date: day(-24),
+        end_date: day(-23),
         days: 2,
         reason: "Food poisoning.",
       },
@@ -1351,7 +1379,7 @@ async function main() {
         hiring_department: "Engineering",
         openings: 2,
         hiring_manager: anucha.id,
-        target_start_date: "2026-11-03",
+        target_start_date: day(43),
         job_description: "Manual and automated testing across the portal.",
       },
     },
@@ -1366,7 +1394,7 @@ async function main() {
       createdAt: at(-29, 13, 30),
       customFields: {
         course_name: "Conversational Thai for Beginners",
-        preferred_date: "2026-10-05",
+        preferred_date: day(14),
         attendees: 6,
         location_preference: "On-site",
       },
@@ -1499,7 +1527,7 @@ async function main() {
       createdAt: at(-2, 9, 35),
       customFields: {
         room: "Board Room",
-        setup_date: "2026-09-18",
+        setup_date: day(-3),
         layout: "Boardroom",
         equipment: ["Projector", "Video conference", "Whiteboard"],
         headcount: 14,
@@ -1517,7 +1545,7 @@ async function main() {
       createdAt: at(-19, 8, 45),
       customFields: {
         room: "Training Room",
-        setup_date: "2026-08-24",
+        setup_date: day(-28),
         layout: "Classroom",
         equipment: ["Projector", "Flipchart"],
         headcount: 24,
@@ -1535,7 +1563,7 @@ async function main() {
       customFields: {
         area: "Floor 3 pantry",
         cleaning_type: "Deep clean",
-        preferred_date: "2026-09-14",
+        preferred_date: day(-7),
         after_hours: true,
         details: "Fridge has not been cleared since June. Microwave needs degreasing.",
       },
@@ -1585,7 +1613,7 @@ async function main() {
         location: "Floor 2 washroom",
         category: "Plumbing",
         description: "Hot tap drips continuously even when fully closed.",
-        preferred_date: "2026-09-15",
+        preferred_date: day(-6),
         safety_risk: false,
       },
     },
@@ -1620,7 +1648,7 @@ async function main() {
         item_description: "10 × Laptop 14\", 32GB RAM, 1TB SSD, three-year warranty.",
         amount: 780000,
         currency: "THB",
-        needed_by: "2026-10-15",
+        needed_by: day(24),
         approver: purachaet.id,
       },
     },
@@ -1638,7 +1666,7 @@ async function main() {
         item_description: "Annual licence renewal, 12 seats.",
         amount: 4200,
         currency: "USD",
-        needed_by: "2026-09-30",
+        needed_by: day(9),
         approver: surasak.id,
       },
     },
@@ -1688,7 +1716,7 @@ async function main() {
       customFields: {
         amount: 18600,
         category: "Travel",
-        expense_date: "2026-08-28",
+        expense_date: day(-24),
         notes: "Hotel and fuel for the upcountry dealer visits.",
       },
     },
@@ -1703,9 +1731,9 @@ async function main() {
       assignedToId: malee.id,
       createdAt: at(-14, 10, 55),
       customFields: {
-        campaign_name: "Songkran 2026",
+        campaign_name: "Songkran 2027",
         channels: ["Facebook", "Instagram", "LINE", "Print"],
-        launch_date: "2026-04-01",
+        launch_date: day(203),
         budget: 850000,
         target_audience: "Domestic customers aged 25–44 in Bangkok and the central provinces.",
         needs_legal_review: true,
@@ -1721,9 +1749,9 @@ async function main() {
       assignedToId: malee.id,
       createdAt: at(0, 11, 30),
       customFields: {
-        campaign_name: "Thank You 2026",
+        campaign_name: "Thank You",
         channels: ["Email", "LINE"],
-        launch_date: "2026-12-01",
+        launch_date: day(71),
         budget: 320000,
         target_audience: "Customers who purchased at least twice this year.",
         needs_legal_review: false,
@@ -1741,7 +1769,7 @@ async function main() {
       customFields: {
         asset_type: "Banner",
         dimensions: "850 × 2000 mm roll-up, 3 m backdrop",
-        deadline: "2026-09-26",
+        deadline: day(5),
         quantity: 4,
         brief: "Match the Songkran campaign look, English and Thai on separate banners.",
         brand_guidelines: true,
@@ -1759,7 +1787,7 @@ async function main() {
       customFields: {
         asset_type: "Social post",
         dimensions: "1080×1080, 1080×1920, 1200×628",
-        deadline: "2026-08-22",
+        deadline: day(-30),
         quantity: 12,
         brief: "Three concepts, each in all three sizes, with and without the price tag.",
         brand_guidelines: true,
@@ -1776,7 +1804,7 @@ async function main() {
       createdAt: at(-8, 15, 5),
       customFields: {
         event_name: "Bangkok Tech Week 2026",
-        event_date: "2026-11-18",
+        event_date: day(58),
         sponsorship_tier: "Gold",
         amount: 450000,
         contact_person: malee.id,
@@ -1795,7 +1823,7 @@ async function main() {
       createdAt: at(-36, 14, 0),
       customFields: {
         event_name: "Chulalongkorn & Thammasat Career Fair",
-        event_date: "2026-10-08",
+        event_date: day(17),
         sponsorship_tier: "Bronze",
         amount: 80000,
         contact_person: nid.id,
