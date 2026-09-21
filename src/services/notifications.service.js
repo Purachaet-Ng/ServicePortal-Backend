@@ -87,7 +87,7 @@ const quoteTitle = (title) =>
  * Never throws, for the reason given on notifyTicketUpdated. sendMail is
  * deliberately not awaited: see its comment.
  */
-const mailNotifications = async (messages, link) => {
+const mailNotifications = async (messages, link, details) => {
   if (!process.env.SMTP_HOST) return;
 
   try {
@@ -96,17 +96,46 @@ const mailNotifications = async (messages, link) => {
       select: { id: true, email: true },
     });
 
-    // Relative in the app, absolute in an inbox.
-    const base = process.env.CORS_ORIGIN ?? "";
+    // Relative in the app, absolute in an inbox. APP_URL wins when set: the
+    // dev origin is http://localhost:5173, which is a dead link in anybody's
+    // inbox but the developer's own.
+    const base = process.env.APP_URL || process.env.CORS_ORIGIN || "";
 
     for (const { id, email } of users) {
       const message = messages.get(id);
-      sendMail(email, message, `${message}\n\n${base}${link}`);
+      sendMail(
+        email,
+        message,
+        `${message}\n\n${base}${link}`,
+        `${base}${link}`,
+        details,
+      );
     }
   } catch (error) {
     console.error("[mail] recipient lookup failed", error);
   }
 };
+
+/**
+ * The field table in the email — the in-app notification is the sentence
+ * alone. An inbox is read away from the app, so the fields that decide
+ * whether it is worth opening go in the mail; empty ones are dropped by the
+ * template, so an unassigned or untyped ticket simply shows fewer rows.
+ *
+ * Every value is already on the row both fan-outs hold (ticketInclude in
+ * ticket.service.js selects requestType and assignedTo), so this costs no
+ * extra query. Title is the full one, not quoteTitle's 60-character cut —
+ * the dropdown is narrow, an email is not.
+ */
+export const ticketDetails = (ticket) => ({
+  Title: ticket.title,
+  Type: ticket.requestType?.name,
+  Status: ticket.status,
+  Priority: ticket.priority,
+  "Assigned to": ticket.assignedTo
+    ? `${ticket.assignedTo.firstname} ${ticket.assignedTo.lastname}`.trim()
+    : undefined,
+});
 
 /**
  * Fan-out for PATCH /tickets/:id and /tickets/:id/status
@@ -160,7 +189,7 @@ export const notifyTicketUpdated = async ({ before, after, actorId }) => {
       })),
     });
 
-    await mailNotifications(messages, link);
+    await mailNotifications(messages, link, ticketDetails(after));
   } catch (error) {
     console.error("[notifications] ticket fan-out failed", error);
   }
@@ -222,7 +251,7 @@ export const notifyTicketCreated = async ({ ticket, departmentId, actor }) => {
       })),
     });
 
-    await mailNotifications(messages, link);
+    await mailNotifications(messages, link, ticketDetails(ticket));
   } catch (error) {
     console.error("[notifications] ticket create fan-out failed", error);
   }

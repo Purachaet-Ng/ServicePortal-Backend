@@ -1,5 +1,7 @@
 import "dotenv/config";
 import nodemailer from "nodemailer";
+import { fileURLToPath } from "node:url";
+import { renderNotificationEmail, LOGO_CID } from "./mail-template.js";
 
 /**
  * Email is a mirror of the in-app notification, not a second system: the
@@ -40,8 +42,12 @@ const getTransport = () => {
  * Returns nothing and throws nothing — same reason the fan-outs swallow their
  * own errors: the change already happened, and a failed email must not be
  * able to turn it into a 500.
+ *
+ * `url` and `details` are optional: with a url the HTML half gets a button,
+ * with details it gets a field table, without either it is the sentence alone. Both halves always go out — plain text is what a
+ * client with images and HTML switched off, or a screen reader, falls back to.
  */
-export const sendMail = (to, subject, text) => {
+export const sendMail = (to, subject, text, url, details) => {
   if (!process.env.SMTP_HOST || !to) return;
 
   return getTransport()
@@ -50,6 +56,17 @@ export const sendMail = (to, subject, text) => {
       to,
       subject,
       text,
+      html: renderNotificationEmail(subject, url, details),
+      // Inline, not remote — the template explains why. `cid` must match the
+      // src the template writes, and `path` is resolved from this file so the
+      // API can be started from any working directory.
+      attachments: [
+        {
+          filename: "logo-wordmark.png",
+          path: fileURLToPath(new URL("../../assets/logo-wordmark.png", import.meta.url)),
+          cid: LOGO_CID,
+        },
+      ],
     })
     .catch((error) => console.error("[mail] send failed", error));
 };
